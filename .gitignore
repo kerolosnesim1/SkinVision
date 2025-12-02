@@ -6,3 +6,40 @@ obj/
 *.suo
 *.tmp
 *.log
+
+# .NET specific
+*.dll
+*.exe
+*.pdb
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.sln.cache
+
+# User-specific files
+*.rsuser
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# SQL Server files
+*.mdf
+*.ldf
+*.ndf
+
+# Publish profiles
+*.pubxml
+*.azurePubxml

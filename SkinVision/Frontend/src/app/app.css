@@ -1,0 +1,46 @@
+.app {
+  min-height: 100vh;
+}
+
+header {
+  background: #333;
+  color: white;
+  padding: 15px 0;
+  border-bottom: 2px solid #555;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+nav {
+  display: flex;
+  gap: 20px;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  padding: 5px 10px;
+}
+
+nav a:hover {
+  background: #555;
+  border-radius: 4px;
+}
+
+main {
+  padding: 20px;
+}
+
+

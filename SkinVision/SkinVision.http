@@ -1,6 +1,0 @@
-@SkinVision_HostAddress = http://localhost:5163
-
-GET {{SkinVision_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
