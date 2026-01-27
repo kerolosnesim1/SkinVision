@@ -1,10 +1,56 @@
 <div class="app">
-  <header>
+  <header [class.scrolled]="isScrolled">
     <div class="header-content">
-      <h1>SkinVision</h1>
-      <nav>
-        <a routerLink="/">Home</a>
-        <a routerLink="/login">Login</a>
+      <a routerLink="/" class="logo">
+        <div class="logo-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
+            <circle cx="16" cy="16" r="8" fill="currentColor" opacity="0.3"/>
+            <circle cx="16" cy="16" r="4" fill="currentColor"/>
+          </svg>
+        </div>
+        <span class="logo-text">SkinVision</span>
+      </a>
+      
+      <nav class="desktop-nav">
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
+        <a routerLink="/about" routerLinkActive="active">About</a>
+        <a routerLink="/contact" routerLinkActive="active">Contact</a>
+      </nav>
+      
+      <!-- Not logged in -->
+      <div class="header-actions" *ngIf="!currentUser">
+        <a routerLink="/login" class="btn-login">Sign In</a>
+        <a routerLink="/register" class="btn-register">Get Started</a>
+      </div>
+      
+      <!-- Logged in -->
+      <div class="header-actions" *ngIf="currentUser">
+        <a [routerLink]="getDashboardLink()" class="btn-login">Dashboard</a>
+        <button class="btn-logout" (click)="logout()">Logout</button>
+      </div>
+      
+      <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+        <span class="hamburger" [class.open]="isMobileMenuOpen"></span>
+      </button>
+    </div>
+    
+    <div class="mobile-menu" [class.open]="isMobileMenuOpen">
+      <nav class="mobile-nav">
+        <a routerLink="/" (click)="closeMobileMenu()">Home</a>
+        <a routerLink="/about" (click)="closeMobileMenu()">About</a>
+        <a routerLink="/contact" (click)="closeMobileMenu()">Contact</a>
+        <hr>
+        <!-- Not logged in -->
+        <ng-container *ngIf="!currentUser">
+          <a routerLink="/login" (click)="closeMobileMenu()" class="mobile-btn">Sign In</a>
+          <a routerLink="/register" (click)="closeMobileMenu()" class="mobile-btn primary">Get Started</a>
+        </ng-container>
+        <!-- Logged in -->
+        <ng-container *ngIf="currentUser">
+          <a [routerLink]="getDashboardLink()" (click)="closeMobileMenu()" class="mobile-btn">Dashboard</a>
+          <button (click)="logout(); closeMobileMenu()" class="mobile-btn">Logout</button>
+        </ng-container>
       </nav>
     </div>
   </header>

@@ -1,12 +1,24 @@
 .app {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 header {
-  background: #333;
-  color: white;
+  background: transparent;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   padding: 15px 0;
-  border-bottom: 2px solid #555;
+  transition: all 0.3s ease;
+}
+
+header.scrolled {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 .header-content {
@@ -18,29 +30,231 @@ header {
   align-items: center;
 }
 
-header h1 {
-  margin: 0;
-  font-size: 24px;
-}
-
-nav {
+.logo {
   display: flex;
-  gap: 20px;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--primary-color);
 }
 
-nav a {
+.logo-icon {
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+}
+
+.logo-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.desktop-nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.desktop-nav a {
+  color: var(--text-dark);
+  text-decoration: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.desktop-nav a:hover {
+  background: rgba(22, 125, 126, 0.08);
+  color: var(--primary-color);
+}
+
+.desktop-nav a.active {
+  background: rgba(22, 125, 126, 0.1);
+  color: var(--primary-color);
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-login {
+  padding: 10px 20px;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+  background: rgba(22, 125, 126, 0.08);
+}
+
+.btn-register {
+  padding: 10px 22px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   color: white;
   text-decoration: none;
-  padding: 5px 10px;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(22, 125, 126, 0.25);
 }
 
-nav a:hover {
-  background: #555;
-  border-radius: 4px;
+.btn-register:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(22, 125, 126, 0.35);
+}
+
+.btn-logout {
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  z-index: 1001;
+}
+
+.hamburger {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--primary-color);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.hamburger::before,
+.hamburger::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 2px;
+  background: var(--primary-color);
+  transition: all 0.3s ease;
+}
+
+.hamburger::before { top: -8px; }
+.hamburger::after { top: 8px; }
+
+.hamburger.open {
+  background: transparent;
+}
+
+.hamburger.open::before {
+  top: 0;
+  transform: rotate(45deg);
+}
+
+.hamburger.open::after {
+  top: 0;
+  transform: rotate(-45deg);
+}
+
+.mobile-menu {
+  display: none;
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  transform: translateY(-100%);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 999;
+}
+
+.mobile-menu.open {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mobile-nav a {
+  color: var(--text-dark);
+  text-decoration: none;
+  padding: 15px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.mobile-nav a:hover {
+  background: var(--background-color);
+  color: var(--primary-color);
+}
+
+.mobile-nav hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 10px 0;
+}
+
+.mobile-nav .mobile-btn {
+  text-align: center;
+  border: 2px solid var(--border-color);
+  margin-top: 5px;
+}
+
+.mobile-nav .mobile-btn.primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border-color: transparent;
 }
 
 main {
-  padding: 20px;
+  flex: 1;
+  padding-top: 0;
 }
 
+@media (max-width: 900px) {
+  .desktop-nav,
+  .header-actions {
+    display: none;
+  }
+
+  .mobile-menu-btn {
+    display: block;
+  }
+
+  .mobile-menu {
+    display: block;
+  }
+
+  header {
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  }
+}
 
