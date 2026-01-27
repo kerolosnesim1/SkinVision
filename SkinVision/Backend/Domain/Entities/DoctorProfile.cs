@@ -17,4 +17,5 @@ public partial class DoctorProfile
 
     public virtual User Doctor { get; set; } = null!;
 
+    public virtual ICollection<VerificationRequest> VerificationRequests { get; set; } = new List<VerificationRequest>();
 }

@@ -9,6 +9,10 @@ public partial class Report
 
     public int? DiagnosisId { get; set; }
 
+    public string? ReportPath { get; set; }
+
+    public string? Format { get; set; }
+
     public DateTime? CreatedAt { get; set; }
 
     public virtual Diagnosis? Diagnosis { get; set; }

@@ -20,6 +20,9 @@ public partial class Diagnosis
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+
+    public virtual ICollection<Bill> Bills { get; set; } = new List<Bill>();
+
     public virtual DoctorProfile? Doctor { get; set; }
 
     public virtual Image? Image { get; set; }

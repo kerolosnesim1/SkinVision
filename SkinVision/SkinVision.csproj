@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.10">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -25,6 +24,7 @@
     <Folder Include="Backend\Application\DTOs\" />
     <Folder Include="Backend\Application\Services\" />
     <Folder Include="Backend\Domain\Enums\" />
+    <Folder Include="Backend\Infrastructure\Configurations\" />
     <Folder Include="Backend\Infrastructure\Repositories\" />
   </ItemGroup>
 

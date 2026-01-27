@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SkinVision.Backend.Domain.Entities;
 
 namespace SkinVision.Backend.Infrastructure.Context
@@ -13,14 +13,15 @@ namespace SkinVision.Backend.Infrastructure.Context
         public DbSet<User> Users { get; set; }
         public DbSet<PatientProfile> PatientProfiles { get; set; }
         public DbSet<DoctorProfile> DoctorProfiles { get; set; }
-        public DbSet<Case> Cases { get; set; }
         public DbSet<Image> Images { get; set; }
         public DbSet<Prediction> Predictions { get; set; }
         public DbSet<Diagnosis> Diagnoses { get; set; }
         public DbSet<Report> Reports { get; set; }
+        public DbSet<Bill> Bills { get; set; }
         public DbSet<Message> Messages { get; set; }
-        public DbSet<Payment> Payments { get; set; }
-        public DbSet<AIJob> AIJobs { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Log> Logs { get; set; }
+        public DbSet<VerificationRequest> VerificationRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
