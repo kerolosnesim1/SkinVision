@@ -14,9 +14,9 @@ import { CommonModule } from '@angular/common';
         <div class="hero-badge">AI-Powered Dermatology Platform</div>
         <h1>Your Skin Health,<br><span>Our Priority</span></h1>
         <p class="hero-subtitle">
-          Get expert dermatological consultations from certified doctors, powered by 
-          advanced AI diagnostics. Upload images, receive analysis, and connect with 
-          specialists — all from the comfort of your home.
+          Connect with certified dermatologists who use advanced AI-powered tools 
+          to analyze your skin concerns. Upload images, get expert diagnosis, and 
+          receive treatment plans — all from the comfort of your home.
         </p>
         <div class="hero-buttons">
           <a routerLink="/register" class="btn-primary-lg">Get Started Free</a>
@@ -41,23 +41,38 @@ import { CommonModule } from '@angular/common';
       </div>
       <div class="hero-image">
         <div class="floating-card card-1">
-          <div class="card-icon success">✓</div>
+          <div class="card-icon warning">⚠</div>
           <div class="card-text">
-            <strong>Analysis Complete</strong>
-            <span>No concerns detected</span>
+            <strong>Lesion Detected</strong>
+            <span>AI flagged for doctor</span>
           </div>
         </div>
         <div class="floating-card card-2">
-          <div class="card-icon info">🔬</div>
+          <div class="card-icon info">👨‍⚕️</div>
           <div class="card-text">
-            <strong>AI Processing</strong>
+            <strong>Doctor's AI Assistant</strong>
             <span>87% confidence</span>
           </div>
         </div>
         <div class="hero-illustration">
           <div class="illustration-circle"></div>
           <div class="illustration-inner">
+            <!-- Realistic Dermascope Skin -->
+            <div class="derm-skin">
+              <div class="skin-base"></div>
+              <div class="skin-detail"></div>
+              <!-- Skin condition - mole/lesion -->
+              <div class="lesion">
+                <div class="lesion-inner"></div>
+              </div>
+              <!-- Analysis markers -->
+              <div class="analysis-ring"></div>
+              <div class="marker marker-1"></div>
+              <div class="marker marker-2"></div>
+              <div class="marker marker-3"></div>
+            </div>
             <div class="scan-line"></div>
+            <div class="vignette"></div>
           </div>
         </div>
       </div>
@@ -85,8 +100,8 @@ import { CommonModule } from '@angular/common';
             <div class="feature-icon" style="background: linear-gradient(135deg, #2BB1B8, #4caf50);">
               <span>🤖</span>
             </div>
-            <h3>AI-Powered Analysis</h3>
-            <p>Advanced machine learning algorithms analyze your images and provide preliminary assessments within seconds.</p>
+            <h3>AI-Assisted Diagnosis</h3>
+            <p>Doctors use advanced AI tools to analyze your images, helping them provide faster and more accurate diagnoses.</p>
           </div>
           
           <div class="feature-card">
@@ -157,8 +172,8 @@ import { CommonModule } from '@angular/common';
           <div class="step">
             <div class="step-number">3</div>
             <div class="step-content">
-              <h3>AI + Doctor Review</h3>
-              <p>Our AI analyzes your images, then a certified dermatologist reviews your case</p>
+              <h3>Doctor Review</h3>
+              <p>A certified dermatologist reviews your case using AI-powered diagnostic tools</p>
             </div>
           </div>
           
@@ -185,7 +200,7 @@ import { CommonModule } from '@angular/common';
             <ul>
               <li>Create and track cases easily</li>
               <li>Upload multiple skin images</li>
-              <li>View AI analysis results</li>
+              <li>Get expert doctor diagnosis</li>
               <li>Chat with assigned doctors</li>
               <li>Download diagnosis reports</li>
               <li>Manage medical history</li>
@@ -199,7 +214,7 @@ import { CommonModule } from '@angular/common';
             <ul>
               <li>Manage patient queue efficiently</li>
               <li>Access patient medical history</li>
-              <li>Trigger AI analysis on images</li>
+              <li>Use AI-powered diagnostic tools</li>
               <li>Provide diagnosis and treatment</li>
               <li>Generate professional reports</li>
               <li>Set availability status</li>
@@ -261,26 +276,26 @@ import { CommonModule } from '@angular/common';
             <p>AI-Powered Dermatology Platform</p>
           </div>
           <div class="footer-links">
-            <a href="#">About Us</a>
-            <a href="#">Contact</a>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <a routerLink="/about">About Us</a>
+            <a routerLink="/contact">Contact</a>
+            <a routerLink="/privacy">Privacy Policy</a>
+            <a routerLink="/terms">Terms of Service</a>
           </div>
           <div class="footer-copyright">
             <p>© 2026 SkinVision. All rights reserved.</p>
           </div>
-        </div>
       </div>
+    </div>
     </footer>
   `,
   styles: [`
     /* Hero Section */
     .hero {
-      min-height: 90vh;
+      min-height: 100vh;
       display: grid;
       grid-template-columns: 1fr 1fr;
       align-items: center;
-      padding: 60px 5%;
+      padding: 120px 5% 60px;
       position: relative;
       overflow: hidden;
       background: linear-gradient(135deg, #F0F8F9 0%, #ffffff 100%);
@@ -420,7 +435,7 @@ import { CommonModule } from '@angular/common';
       background: linear-gradient(135deg, #167D7E, #2BB1B8);
       border-radius: 50%;
       position: relative;
-      box-shadow: 0 20px 60px rgba(22, 125, 126, 0.3);
+      box-shadow: 0 25px 60px rgba(22, 125, 126, 0.35);
     }
 
     .illustration-circle {
@@ -434,36 +449,198 @@ import { CommonModule } from '@angular/common';
       animation: rotate 20s linear infinite;
     }
 
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     .illustration-inner {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 280px;
-      height: 280px;
-      background: rgba(255, 255, 255, 0.1);
+      width: 290px;
+      height: 290px;
       border-radius: 50%;
       overflow: hidden;
+      border: 4px solid rgba(255, 255, 255, 0.25);
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.2);
     }
 
+    /* Realistic Human Skin */
+    .derm-skin {
+      position: absolute;
+      inset: 0;
+      background: #e8beaa;
+    }
+
+    .skin-base {
+      position: absolute;
+      inset: 0;
+      /* Natural skin tone with subtle color variation */
+      background: 
+        linear-gradient(160deg, #f5d0c0 0%, #ecc4b2 25%, #e4b8a5 50%, #daa896 75%, #d4a08e 100%);
+    }
+
+    .skin-detail {
+      position: absolute;
+      inset: 0;
+      /* Realistic skin texture - pores, wrinkles, natural imperfections */
+      background-image:
+        /* Hair follicles / pores */
+        radial-gradient(circle 1px at 10% 12%, #c49080 100%, transparent 100%),
+        radial-gradient(circle 1px at 22% 8%, #c08878 100%, transparent 100%),
+        radial-gradient(circle 1px at 35% 15%, #c49080 100%, transparent 100%),
+        radial-gradient(circle 1px at 48% 10%, #c08878 100%, transparent 100%),
+        radial-gradient(circle 1px at 62% 14%, #c49080 100%, transparent 100%),
+        radial-gradient(circle 1px at 78% 9%, #c08878 100%, transparent 100%),
+        radial-gradient(circle 1px at 88% 16%, #c49080 100%, transparent 100%),
+        radial-gradient(circle 1px at 8% 28%, #c08878 100%, transparent 100%),
+        radial-gradient(circle 1px at 18% 32%, #c49080 100%, transparent 100%),
+        radial-gradient(circle 1px at 85% 30%, #c08878 100%, transparent 100%),
+        radial-gradient(circle 1px at 92% 35%, #c49080 100%, transparent 100%),
+        radial-gradient(circle 1px at 12% 68%, #c08878 100%, transparent 100%),
+        radial-gradient(circle 1px at 20% 72%, #c49080 100%, transparent 100%),
+        radial-gradient(circle 1px at 8% 82%, #c08878 100%, transparent 100%),
+        radial-gradient(circle 1px at 82% 70%, #c49080 100%, transparent 100%),
+        radial-gradient(circle 1px at 90% 75%, #c08878 100%, transparent 100%),
+        radial-gradient(circle 1px at 78% 85%, #c49080 100%, transparent 100%),
+        radial-gradient(circle 1px at 15% 92%, #c08878 100%, transparent 100%),
+        radial-gradient(circle 1px at 85% 90%, #c49080 100%, transparent 100%),
+        /* Small freckles */
+        radial-gradient(circle 2px at 25% 22%, rgba(180,130,110,0.4) 100%, transparent 100%),
+        radial-gradient(circle 1.5px at 72% 25%, rgba(175,125,105,0.35) 100%, transparent 100%),
+        radial-gradient(circle 2px at 18% 75%, rgba(180,130,110,0.3) 100%, transparent 100%),
+        radial-gradient(circle 1.5px at 80% 78%, rgba(175,125,105,0.35) 100%, transparent 100%),
+        /* Skin creases/lines */
+        linear-gradient(65deg, transparent 49.5%, rgba(200,160,140,0.2) 50%, transparent 50.5%),
+        linear-gradient(115deg, transparent 49.5%, rgba(195,155,135,0.15) 50%, transparent 50.5%),
+        linear-gradient(85deg, transparent 49.5%, rgba(190,150,130,0.18) 50%, transparent 50.5%);
+    }
+
+    /* Suspicious Mole / Skin Lesion */
+    .lesion {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 65px;
+      height: 55px;
+      /* Irregular mole with ABCDE warning signs */
+      background: 
+        radial-gradient(ellipse 90% 80% at 40% 40%, #3d1f15 0%, #5a3025 25%, #7a4535 50%, #9a6050 75%, transparent 100%);
+      border-radius: 42% 58% 38% 62% / 55% 40% 60% 45%;
+      box-shadow: 
+        0 1px 4px rgba(50,25,15,0.5),
+        inset 1px 1px 3px rgba(255,200,180,0.2);
+    }
+
+    .lesion::before {
+      content: '';
+      position: absolute;
+      top: 15%;
+      left: 20%;
+      width: 45%;
+      height: 50%;
+      background: radial-gradient(ellipse at 50% 50%, #2a1510 0%, #3d2018 60%, transparent 100%);
+      border-radius: 50% 40% 55% 45%;
+    }
+
+    .lesion::after {
+      content: '';
+      position: absolute;
+      top: 35%;
+      right: 15%;
+      width: 25%;
+      height: 30%;
+      background: radial-gradient(ellipse at 50% 50%, #4a2820 0%, transparent 70%);
+      border-radius: 45% 55%;
+    }
+
+    .lesion-inner {
+      display: none;
+    }
+
+    /* Analysis ring around lesion - warning color */
+    .analysis-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 95px;
+      height: 85px;
+      border: 2px solid rgba(251, 191, 36, 0.9);
+      border-radius: 50%;
+      box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+      animation: pulse-ring 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-ring {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; box-shadow: 0 0 15px rgba(251, 191, 36, 0.3); }
+      50% { transform: translate(-50%, -50%) scale(1.06); opacity: 0.6; box-shadow: 0 0 25px rgba(251, 191, 36, 0.5); }
+    }
+
+    /* Detection markers */
+    .marker {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: #fbbf24;
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(251, 191, 36, 0.8);
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    .marker-1 { top: 40%; left: 38%; animation-delay: 0s; }
+    .marker-2 { top: 52%; left: 55%; animation-delay: 0.3s; }
+    .marker-3 { 
+      top: 58%; 
+      left: 45%; 
+      background: #ef4444; 
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+      animation-delay: 0.6s; 
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* Scan Line */
     .scan-line {
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      height: 3px;
-      background: rgba(255, 255, 255, 0.8);
-      animation: scan 2s ease-in-out infinite;
+      height: 4px;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(74, 222, 128, 0.4) 15%,
+        rgba(74, 222, 128, 0.9) 50%, 
+        rgba(74, 222, 128, 0.4) 85%,
+        transparent 100%
+      );
+      box-shadow: 
+        0 0 20px rgba(74, 222, 128, 0.6), 
+        0 0 40px rgba(74, 222, 128, 0.3),
+        0 2px 10px rgba(74, 222, 128, 0.4);
+      animation: scan 3s ease-in-out infinite;
     }
 
     @keyframes scan {
-      0%, 100% { top: 0; }
-      50% { top: 100%; }
+      0% { top: 0; opacity: 0; }
+      5% { opacity: 1; }
+      95% { opacity: 1; }
+      100% { top: calc(100% - 4px); opacity: 0; }
     }
 
-    @keyframes rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    /* Dermascope lens vignette effect */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.3) 100%);
+      pointer-events: none;
     }
 
     .floating-card {
@@ -508,6 +685,11 @@ import { CommonModule } from '@angular/common';
     .card-icon.success {
       background: rgba(76, 175, 80, 0.1);
       color: #4caf50;
+    }
+
+    .card-icon.warning {
+      background: rgba(251, 191, 36, 0.1);
+      color: #f59e0b;
     }
 
     .card-icon.info {
@@ -629,13 +811,13 @@ import { CommonModule } from '@angular/common';
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      gap: 20px;
-      flex-wrap: wrap;
+      gap: 15px;
     }
 
     .step {
       text-align: center;
-      max-width: 220px;
+      width: 200px;
+      flex-shrink: 0;
     }
 
     .step-number {
@@ -667,10 +849,11 @@ import { CommonModule } from '@angular/common';
     }
 
     .step-connector {
-      width: 60px;
+      width: 50px;
       height: 2px;
       background: linear-gradient(90deg, #167D7E, #2BB1B8);
       margin-top: 30px;
+      flex-shrink: 0;
     }
 
     /* User Types Section */
@@ -979,6 +1162,23 @@ import { CommonModule } from '@angular/common';
 
       .features-grid {
         grid-template-columns: 1fr;
+      }
+
+      .steps-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 25px;
+      }
+
+      .step {
+        width: 100%;
+        max-width: 280px;
+      }
+
+      .step-connector {
+        width: 2px;
+        height: 30px;
+        margin: 0;
       }
 
       .trust-grid {
