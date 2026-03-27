@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
@@ -12,50 +12,58 @@ import { CommonModule } from '@angular/common';
       <div class="auth-card">
         <div class="auth-header">
           <h1>Create Account</h1>
-          <p>Join SkinVision today</p>
+          <p>Register to start using SkinVision</p>
         </div>
 
         <form (ngSubmit)="onSubmit()">
           <div class="form-group">
-            <label>I am a</label>
-            <div class="role-buttons">
-              <button type="button" [class.active]="formData.role === 'patient'" (click)="formData.role = 'patient'">Patient</button>
-              <button type="button" [class.active]="formData.role === 'doctor'" (click)="formData.role = 'doctor'">Doctor</button>
-            </div>
-          </div>
-
-          <div class="form-group">
             <label>Full Name</label>
-            <input type="text" [(ngModel)]="formData.fullName" name="fullName" placeholder="Enter your full name" required>
+            <input type="text" [(ngModel)]="form.fullName" name="fullName" 
+                   placeholder="Dr. Ahmed Hassan" required>
           </div>
 
           <div class="form-group">
             <label>Email</label>
-            <input type="email" [(ngModel)]="formData.email" name="email" placeholder="Enter your email" required>
+            <input type="email" [(ngModel)]="form.email" name="email" 
+                   placeholder="doctor@example.com" required>
           </div>
 
           <div class="form-group">
-            <label>Password</label>
-            <input type="password" [(ngModel)]="formData.password" name="password" placeholder="Create a password" required>
+            <label>Phone</label>
+            <input type="tel" [(ngModel)]="form.phone" name="phone" 
+                   placeholder="01012345678" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" [(ngModel)]="form.password" name="password" 
+                     placeholder="Create password" required>
+            </div>
+            <div class="form-group">
+              <label>Confirm</label>
+              <input type="password" [(ngModel)]="form.confirmPassword" name="confirmPassword" 
+                     placeholder="Confirm" required>
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <div class="form-group">
+            <label>Clinic Name</label>
+            <input type="text" [(ngModel)]="form.clinicName" name="clinicName" 
+                   placeholder="SkinCare Clinic" required>
           </div>
 
           <div class="form-group">
-            <label>Confirm Password</label>
-            <input type="password" [(ngModel)]="formData.confirmPassword" name="confirmPassword" placeholder="Confirm password" required>
+            <label>Clinic Address</label>
+            <input type="text" [(ngModel)]="form.clinicAddress" name="clinicAddress" 
+                   placeholder="123 Medical Center, Cairo" required>
           </div>
 
-          <!-- Doctor fields -->
-          <div *ngIf="formData.role === 'doctor'" class="form-group">
-            <label>License Number</label>
-            <input type="text" [(ngModel)]="formData.licenseNumber" name="licenseNumber" placeholder="Enter your medical license number" required>
-          </div>
-
-          <div *ngIf="formData.role === 'doctor'" class="form-group">
-            <label>Years of Experience</label>
-            <input type="number" [(ngModel)]="formData.experience" name="experience" placeholder="Enter years of experience" min="0" required>
-          </div>
-
-          <button type="submit" class="btn-submit" [disabled]="!isFormValid()">Create Account</button>
+          <button type="submit" class="btn-submit" [disabled]="!isValid()">
+            Create Account
+          </button>
         </form>
 
         <p class="auth-footer">
@@ -76,7 +84,7 @@ import { CommonModule } from '@angular/common';
 
     .auth-card {
       width: 100%;
-      max-width: 420px;
+      max-width: 480px;
       background: white;
       padding: 40px;
       border-radius: 16px;
@@ -100,12 +108,12 @@ import { CommonModule } from '@angular/common';
     }
 
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .form-group label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-weight: 600;
       color: #333;
       font-size: 14px;
@@ -113,7 +121,7 @@ import { CommonModule } from '@angular/common';
 
     .form-group input {
       width: 100%;
-      padding: 14px 16px;
+      padding: 12px 14px;
       border: 2px solid #e5e5e5;
       border-radius: 10px;
       font-size: 15px;
@@ -125,31 +133,16 @@ import { CommonModule } from '@angular/common';
       border-color: #167D7E;
     }
 
-    .role-buttons {
+    .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 15px;
     }
 
-    .role-buttons button {
-      padding: 14px;
-      border: 2px solid #e5e5e5;
-      border-radius: 10px;
-      background: white;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .role-buttons button:hover {
-      border-color: #167D7E;
-    }
-
-    .role-buttons button.active {
-      background: #167D7E;
-      color: white;
-      border-color: #167D7E;
+    .divider {
+      border: none;
+      border-top: 1px solid #e5e5e5;
+      margin: 25px 0;
     }
 
     .btn-submit {
@@ -187,41 +180,51 @@ import { CommonModule } from '@angular/common';
       text-decoration: none;
       font-weight: 600;
     }
+
+    @media (max-width: 500px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
   `]
 })
 export class RegisterComponent {
-  formData = {
-    role: '',
+  form = {
     fullName: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
-    licenseNumber: '',
-    experience: null as number | null
+    clinicName: '',
+    clinicAddress: ''
   };
 
-  isFormValid(): boolean {
-    const baseValid = this.formData.role !== '' && 
-                      this.formData.fullName.trim() !== '' && 
-                      this.formData.email.trim() !== '' && 
-                      this.formData.password.trim() !== '' && 
-                      this.formData.password === this.formData.confirmPassword;
+  constructor(private router: Router) {}
 
-    if (this.formData.role === 'doctor') {
-      return baseValid && 
-             this.formData.licenseNumber.trim() !== '' && 
-             this.formData.experience !== null && 
-             this.formData.experience >= 0;
-    }
-
-    return baseValid;
+  isValid(): boolean {
+    return this.form.fullName.trim() !== '' &&
+           this.form.email.trim() !== '' &&
+           this.form.phone.trim() !== '' &&
+           this.form.password.trim() !== '' &&
+           this.form.password === this.form.confirmPassword &&
+           this.form.clinicName.trim() !== '' &&
+           this.form.clinicAddress.trim() !== '';
   }
 
   onSubmit() {
-    if (!this.isFormValid()) {
-      alert('Please fill all required fields');
+    if (!this.isValid()) {
+      alert('Please fill all fields correctly');
       return;
     }
-    console.log('Register form submitted:', this.formData);
+
+    // Mock registration
+    localStorage.setItem('currentUser', JSON.stringify({
+      email: this.form.email,
+      fullName: this.form.fullName,
+      clinicName: this.form.clinicName
+    }));
+
+    alert('Account created successfully!');
+    this.router.navigate(['/doctor']);
   }
 }

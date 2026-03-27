@@ -1,3 +1,6 @@
 <Solution>
-  <Project Path="SkinVision/SkinVision.csproj" />
+  <Project Path="SkinVision.Application/SkinVision.Application.csproj" Id="5e42af8e-b05b-406f-8aca-5c82d7b21310" />
+  <Project Path="SkinVision.Domain/SkinVision.Domain.csproj" Id="c9a98af5-4c3a-4756-bc0a-0ab174586dc0" />
+  <Project Path="SkinVision.Infrastructure/SkinVision.Infrastructure.csproj" Id="c296df61-3d99-4d90-b380-e45f0d8a438f" />
+  <Project Path="SkinVision/SkinVision.API.csproj" />
 </Solution>

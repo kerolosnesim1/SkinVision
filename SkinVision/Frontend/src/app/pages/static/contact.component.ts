@@ -8,62 +8,250 @@ import { CommonModule } from '@angular/common';
   imports: [FormsModule, CommonModule],
   template: `
     <div class="page">
-      <section class="hero">
-        <h1>Contact Us</h1>
-        <p>We're here to help</p>
+      <section class="hero-section">
+        <div class="container">
+          <h1>Contact Us</h1>
+          <p class="lead">Have questions? We'd love to hear from you.</p>
+        </div>
       </section>
 
-      <section class="content">
+      <section class="content-section">
         <div class="container">
-          <div class="contact-info">
-            <div class="info-item"><span>📧</span><div><strong>Email</strong><p>support&#64;skinvision.com</p></div></div>
-            <div class="info-item"><span>📞</span><div><strong>Phone</strong><p>+20 123 456 7890</p></div></div>
-            <div class="info-item"><span>📍</span><div><strong>Address</strong><p>Cairo, Egypt</p></div></div>
-          </div>
-
-          <form (ngSubmit)="onSubmit()" class="form">
-            <div class="form-row">
-              <input type="text" [(ngModel)]="form.name" name="name" placeholder="Your Name" required>
-              <input type="email" [(ngModel)]="form.email" name="email" placeholder="Your Email" required>
+          <div class="contact-grid">
+            <div class="contact-form-wrapper">
+              <h2>Send us a message</h2>
+              <form (ngSubmit)="onSubmit()" class="contact-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" [(ngModel)]="form.name" name="name" placeholder="Your name" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" [(ngModel)]="form.email" name="email" placeholder="your@email.com" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Subject</label>
+                  <select [(ngModel)]="form.subject" name="subject">
+                    <option value="general">General Inquiry</option>
+                    <option value="support">Technical Support</option>
+                    <option value="feedback">Feedback</option>
+                    <option value="partnership">Partnership</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Message</label>
+                  <textarea [(ngModel)]="form.message" name="message" rows="5" 
+                            placeholder="How can we help you?" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" [disabled]="submitted">
+                  {{ submitted ? 'Message Sent!' : 'Send Message' }}
+                </button>
+              </form>
             </div>
-            <textarea [(ngModel)]="form.message" name="message" placeholder="Your Message" rows="4" required></textarea>
-            <button type="submit">Send Message</button>
-          </form>
 
-          <div *ngIf="submitted" class="success">Message sent! We'll get back to you soon.</div>
+            <aside class="contact-info">
+              <div class="info-card">
+                <div class="info-icon">📧</div>
+                <h4>Email</h4>
+                <p>support&#64;skinvision.com</p>
+              </div>
+              <div class="info-card">
+                <div class="info-icon">📍</div>
+                <h4>Location</h4>
+                <p>Cairo, Egypt</p>
+              </div>
+              <div class="info-card">
+                <div class="info-icon">⏰</div>
+                <h4>Response Time</h4>
+                <p>Within 24-48 hours</p>
+              </div>
+            </aside>
+          </div>
         </div>
       </section>
     </div>
   `,
   styles: [`
-    .page { padding-top: 100px; }
-    .hero { background: linear-gradient(135deg, #167D7E, #2BB1B8); padding: 60px 20px; text-align: center; color: white; }
-    .hero h1 { font-size: 36px; margin-bottom: 10px; }
-    .hero p { opacity: 0.9; }
-    .content { padding: 60px 20px; }
-    .container { max-width: 600px; margin: 0 auto; }
-    .contact-info { display: flex; justify-content: center; gap: 40px; margin-bottom: 40px; flex-wrap: wrap; }
-    .info-item { display: flex; gap: 12px; align-items: flex-start; }
-    .info-item span { font-size: 24px; }
-    .info-item strong { display: block; color: #333; font-size: 14px; }
-    .info-item p { margin: 0; color: #167D7E; font-size: 14px; }
-    .form { display: flex; flex-direction: column; gap: 15px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .form input, .form textarea { padding: 14px 16px; border: 2px solid #e5e5e5; border-radius: 10px; font-size: 15px; font-family: inherit; }
-    .form input:focus, .form textarea:focus { outline: none; border-color: #167D7E; }
-    .form button { padding: 14px; background: linear-gradient(135deg, #167D7E, #2BB1B8); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
-    .form button:hover { opacity: 0.9; }
-    .success { margin-top: 20px; padding: 15px; background: #d4edda; color: #155724; border-radius: 10px; text-align: center; }
-    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } .contact-info { flex-direction: column; align-items: center; } }
+    .page {
+      padding-top: 70px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .hero-section {
+      background: linear-gradient(135deg, #f8fffe 0%, #e8f5f5 100%);
+      padding: 60px 0;
+      text-align: center;
+    }
+
+    .hero-section h1 {
+      font-size: 36px;
+      color: var(--text-dark);
+      margin: 0 0 12px 0;
+    }
+
+    .lead {
+      font-size: 18px;
+      color: var(--text-light);
+      margin: 0;
+    }
+
+    .content-section {
+      padding: 60px 0;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 48px;
+    }
+
+    .contact-form-wrapper h2 {
+      font-size: 24px;
+      color: var(--text-dark);
+      margin: 0 0 24px 0;
+    }
+
+    .contact-form {
+      background: var(--background-color);
+      padding: 32px;
+      border-radius: 12px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 14px 28px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: #126465;
+    }
+
+    .btn:disabled {
+      background: #28a745;
+    }
+
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .info-card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .info-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .info-card h4 {
+      font-size: 16px;
+      color: var(--text-dark);
+      margin: 0 0 8px 0;
+    }
+
+    .info-card p {
+      font-size: 14px;
+      color: var(--text-light);
+      margin: 0;
+    }
+
+    @media (max-width: 768px) {
+      .contact-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .contact-info {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .info-card {
+        flex: 1;
+        min-width: 140px;
+      }
+    }
   `]
 })
 export class ContactComponent {
-  form = { name: '', email: '', message: '' };
+  form = {
+    name: '',
+    email: '',
+    subject: 'general',
+    message: ''
+  };
   submitted = false;
 
   onSubmit() {
-    this.submitted = true;
-    setTimeout(() => this.submitted = false, 5000);
-    this.form = { name: '', email: '', message: '' };
+    if (this.form.name && this.form.email && this.form.message) {
+      this.submitted = true;
+      setTimeout(() => {
+        this.form = { name: '', email: '', subject: 'general', message: '' };
+        this.submitted = false;
+      }, 3000);
+    }
   }
 }

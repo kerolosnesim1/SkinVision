@@ -7,185 +7,240 @@ import { RouterLink } from '@angular/router';
   imports: [RouterLink],
   template: `
     <div class="page">
-      <section class="hero">
+      <section class="hero-section">
         <div class="container">
           <h1>About SkinVision</h1>
-          <p>AI-powered dermatology care for everyone</p>
+          <p class="lead">Empowering dermatologists with AI-assisted diagnosis tools</p>
         </div>
       </section>
 
-      <section class="mission">
+      <section class="content-section">
         <div class="container">
-          <div class="mission-content">
-            <h2>Our Mission</h2>
-            <p>At SkinVision, we believe quality dermatological care should be accessible to everyone. Our platform connects patients with expert dermatologists who use cutting-edge AI tools for faster, more accurate diagnoses.</p>
-            <p>Founded in 2024, we've helped thousands of patients get professional skin health assessments from certified doctors — all from the comfort of their homes.</p>
-          </div>
-          <div class="stats-box">
-            <div class="stat">
-              <span class="number">10,000+</span>
-              <span class="label">Patients Helped</span>
-            </div>
-            <div class="stat">
-              <span class="number">500+</span>
-              <span class="label">Expert Doctors</span>
-            </div>
-            <div class="stat">
-              <span class="number">98%</span>
-              <span class="label">Accuracy Rate</span>
-            </div>
-          </div>
-        </div>
-      </section>
+          <div class="content-grid">
+            <div class="main-content">
+              <h2>Our Mission</h2>
+              <p>
+                SkinVision is designed to support dermatologists in their diagnostic workflow by combining 
+                advanced AI technology with intuitive digital tools. Our goal is to enhance clinical 
+                efficiency while maintaining the highest standards of medical practice.
+              </p>
 
-      <section class="values">
-        <div class="container">
-          <h2>Our Values</h2>
-          <div class="values-grid">
-            <div class="value-card">
-              <span class="icon">🔬</span>
-              <h3>Innovation</h3>
-              <p>Pushing boundaries in telemedicine and AI diagnostics</p>
-            </div>
-            <div class="value-card">
-              <span class="icon">🤝</span>
-              <h3>Trust</h3>
-              <p>Maintaining highest standards of medical ethics</p>
-            </div>
-            <div class="value-card">
-              <span class="icon">❤️</span>
-              <h3>Care</h3>
-              <p>Patient well-being at the heart of everything</p>
-            </div>
-            <div class="value-card">
-              <span class="icon">🌍</span>
-              <h3>Accessibility</h3>
-              <p>Quality healthcare for everyone, everywhere</p>
-            </div>
-          </div>
-        </div>
-      </section>
+              <h2>What We Offer</h2>
+              <p>
+                Our platform provides a comprehensive examination tool that allows dermatologists to:
+              </p>
+              <ul>
+                <li>Capture and organize dermascope images during patient examinations</li>
+                <li>Receive AI-powered analysis to support diagnostic decisions</li>
+                <li>Document diagnoses, treatments, and follow-up plans digitally</li>
+                <li>Generate professional PDF reports for patient records</li>
+                <li>Maintain a searchable history of all examinations</li>
+              </ul>
 
-      <section class="cta">
-        <div class="container">
-          <h2>Ready to Get Started?</h2>
-          <p>Join thousands who trust SkinVision</p>
-          <a routerLink="/register" class="btn">Create Free Account</a>
+              <h2>AI Technology</h2>
+              <p>
+                Our AI model is trained on dermatological image datasets to identify common skin 
+                conditions. It serves as an advisory tool, providing classification suggestions 
+                to support — not replace — the dermatologist's clinical expertise and judgment.
+              </p>
+              <p>
+                The AI can identify several common skin conditions including melanocytic nevi, 
+                dermatitis, acne, psoriasis, and more. Results are presented as suggestions 
+                for the physician to consider alongside their clinical assessment.
+              </p>
+
+              <h2>For Professionals</h2>
+              <p>
+                SkinVision is designed exclusively for licensed medical professionals. The platform 
+                is intended to be used as a clinical support tool during in-person patient examinations, 
+                not as a standalone diagnostic system or consumer application.
+              </p>
+
+              <div class="cta-box">
+                <h3>Ready to get started?</h3>
+                <p>Create your free account and explore how SkinVision can enhance your practice.</p>
+                <a routerLink="/register" class="btn btn-primary">Create Account</a>
+              </div>
+            </div>
+
+            <aside class="sidebar">
+              <div class="info-card">
+                <h4>Key Features</h4>
+                <ul>
+                  <li>AI-powered image analysis</li>
+                  <li>Digital examination records</li>
+                  <li>PDF report generation</li>
+                  <li>Searchable history</li>
+                  <li>Secure data storage</li>
+                </ul>
+              </div>
+              <div class="info-card">
+                <h4>Contact</h4>
+                <p>Have questions? We're here to help.</p>
+                <a routerLink="/contact">Get in Touch →</a>
+              </div>
+            </aside>
+          </div>
         </div>
       </section>
     </div>
   `,
   styles: [`
-    .page { padding-top: 100px; }
-    
-    .hero {
-      background: linear-gradient(135deg, #167D7E, #2BB1B8);
-      padding: 80px 20px;
+    .page {
+      padding-top: 70px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .hero-section {
+      background: linear-gradient(135deg, #f8fffe 0%, #e8f5f5 100%);
+      padding: 60px 0;
       text-align: center;
-      color: white;
     }
-    .hero h1 { font-size: 42px; margin-bottom: 12px; }
-    .hero p { font-size: 18px; opacity: 0.9; }
-    
-    .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
-    
-    .mission {
-      padding: 80px 20px;
-      background: white;
+
+    .hero-section h1 {
+      font-size: 36px;
+      color: var(--text-dark);
+      margin: 0 0 12px 0;
     }
-    .mission .container {
+
+    .lead {
+      font-size: 18px;
+      color: var(--text-light);
+      margin: 0;
+    }
+
+    .content-section {
+      padding: 60px 0;
+    }
+
+    .content-grid {
       display: grid;
-      grid-template-columns: 1.5fr 1fr;
-      gap: 60px;
-      align-items: center;
+      grid-template-columns: 1fr 280px;
+      gap: 48px;
     }
-    .mission-content h2 {
-      font-size: 32px;
-      color: #167D7E;
+
+    .main-content h2 {
+      font-size: 24px;
+      color: var(--text-dark);
+      margin: 40px 0 16px 0;
+    }
+
+    .main-content h2:first-child {
+      margin-top: 0;
+    }
+
+    .main-content p {
+      font-size: 16px;
+      color: var(--text-light);
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .main-content ul {
+      margin: 0 0 24px 0;
+      padding-left: 24px;
+    }
+
+    .main-content li {
+      font-size: 16px;
+      color: var(--text-light);
+      line-height: 1.7;
+      margin-bottom: 8px;
+    }
+
+    .cta-box {
+      background: var(--background-color);
+      padding: 32px;
+      border-radius: 12px;
+      margin-top: 40px;
+    }
+
+    .cta-box h3 {
+      font-size: 20px;
+      color: var(--text-dark);
+      margin: 0 0 8px 0;
+    }
+
+    .cta-box p {
       margin-bottom: 20px;
     }
-    .mission-content p {
-      color: #555;
-      line-height: 1.8;
-      margin-bottom: 15px;
-    }
-    
-    .stats-box {
-      background: #F0F8F9;
-      padding: 40px;
-      border-radius: 20px;
-    }
-    .stat {
-      text-align: center;
-      padding: 25px 0;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    .stat:last-child { border-bottom: none; }
-    .stat .number {
-      display: block;
-      font-size: 40px;
-      font-weight: 700;
-      color: #167D7E;
-    }
-    .stat .label {
-      font-size: 14px;
-      color: #666;
-    }
-    
-    .values {
-      padding: 80px 20px;
-      background: #F0F8F9;
-    }
-    .values h2 {
-      text-align: center;
-      font-size: 32px;
-      color: #333;
-      margin-bottom: 50px;
-    }
-    .values-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 25px;
-    }
-    .value-card {
-      background: white;
-      padding: 35px 25px;
-      border-radius: 16px;
-      text-align: center;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-    }
-    .value-card .icon { font-size: 40px; display: block; margin-bottom: 15px; }
-    .value-card h3 { color: #333; margin-bottom: 10px; font-size: 18px; }
-    .value-card p { color: #666; font-size: 14px; line-height: 1.6; }
-    
-    .cta {
-      padding: 80px 20px;
-      background: linear-gradient(135deg, #167D7E, #2BB1B8);
-      text-align: center;
-      color: white;
-    }
-    .cta h2 { font-size: 32px; margin-bottom: 12px; }
-    .cta p { margin-bottom: 30px; opacity: 0.9; }
+
     .btn {
       display: inline-block;
-      padding: 16px 35px;
-      background: white;
-      color: #167D7E;
+      padding: 12px 24px;
+      background: var(--primary-color);
+      color: white;
       text-decoration: none;
-      border-radius: 10px;
+      border-radius: 8px;
       font-weight: 600;
+      font-size: 14px;
+    }
+
+    .btn:hover {
+      background: #126465;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .info-card {
+      background: var(--background-color);
+      padding: 24px;
+      border-radius: 12px;
+    }
+
+    .info-card h4 {
       font-size: 16px;
-      transition: transform 0.3s;
+      color: var(--text-dark);
+      margin: 0 0 16px 0;
     }
-    .btn:hover { transform: translateY(-2px); }
-    
-    @media (max-width: 900px) {
-      .mission .container { grid-template-columns: 1fr; }
-      .values-grid { grid-template-columns: repeat(2, 1fr); }
+
+    .info-card ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
     }
-    @media (max-width: 600px) {
-      .values-grid { grid-template-columns: 1fr; }
-      .hero h1 { font-size: 32px; }
+
+    .info-card li {
+      font-size: 14px;
+      color: var(--text-light);
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .info-card li:last-child {
+      border-bottom: none;
+    }
+
+    .info-card p {
+      font-size: 14px;
+      color: var(--text-light);
+      margin: 0 0 12px 0;
+    }
+
+    .info-card a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        order: -1;
+      }
     }
   `]
 })

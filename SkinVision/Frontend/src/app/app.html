@@ -20,13 +20,13 @@
       
       <!-- Not logged in -->
       <div class="header-actions" *ngIf="!currentUser">
-        <a routerLink="/login" class="btn-login">Sign In</a>
+        <a routerLink="/login" class="btn-login">Login</a>
         <a routerLink="/register" class="btn-register">Get Started</a>
       </div>
       
       <!-- Logged in -->
       <div class="header-actions" *ngIf="currentUser">
-        <a [routerLink]="getDashboardLink()" class="btn-login">Dashboard</a>
+        <a routerLink="/doctor" class="btn-login">Dashboard</a>
         <button class="btn-logout" (click)="logout()">Logout</button>
       </div>
       
@@ -41,14 +41,12 @@
         <a routerLink="/about" (click)="closeMobileMenu()">About</a>
         <a routerLink="/contact" (click)="closeMobileMenu()">Contact</a>
         <hr>
-        <!-- Not logged in -->
         <ng-container *ngIf="!currentUser">
-          <a routerLink="/login" (click)="closeMobileMenu()" class="mobile-btn">Sign In</a>
+          <a routerLink="/login" (click)="closeMobileMenu()" class="mobile-btn">Login</a>
           <a routerLink="/register" (click)="closeMobileMenu()" class="mobile-btn primary">Get Started</a>
         </ng-container>
-        <!-- Logged in -->
         <ng-container *ngIf="currentUser">
-          <a [routerLink]="getDashboardLink()" (click)="closeMobileMenu()" class="mobile-btn">Dashboard</a>
+          <a routerLink="/doctor" (click)="closeMobileMenu()" class="mobile-btn">Dashboard</a>
           <button (click)="logout(); closeMobileMenu()" class="mobile-btn">Logout</button>
         </ng-container>
       </nav>

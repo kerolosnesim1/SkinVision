@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
       <div class="auth-card">
         <div class="auth-header">
           <h1>Welcome Back</h1>
-          <p>Sign in to your account</p>
+          <p>Sign in to your SkinVision account</p>
         </div>
 
         <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
@@ -40,15 +40,10 @@ import { CommonModule } from '@angular/common';
         </form>
 
         <p class="auth-footer">
-          Don't have an account? <a routerLink="/register">Create one</a>
+          Don't have an account? <a routerLink="/register">Register here</a>
         </p>
 
-        <div class="demo-section">
-          <span>Quick Demo:</span>
-          <button (click)="quickLogin('patient')">Patient</button>
-          <button (click)="quickLogin('doctor')">Doctor</button>
-          <button (click)="quickLogin('admin')">Admin</button>
-        </div>
+        
       </div>
     </div>
   `,
@@ -149,10 +144,6 @@ import { CommonModule } from '@angular/common';
       text-decoration: none;
     }
 
-    .form-options a:hover {
-      text-decoration: underline;
-    }
-
     .btn-submit {
       width: 100%;
       padding: 14px;
@@ -196,12 +187,12 @@ import { CommonModule } from '@angular/common';
     }
 
     .demo-section button {
-      padding: 6px 12px;
+      padding: 8px 16px;
       background: #f5f5f5;
       border: 1px solid #ddd;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 13px;
       transition: all 0.2s;
     }
 
@@ -226,57 +217,23 @@ export class LoginComponent {
       return;
     }
 
-    // Mock authentication - check email to determine role
-    let role = 'patient'; // default
-    
-    if (this.email.includes('doctor')) {
-      role = 'doctor';
-    } else if (this.email.includes('admin')) {
-      role = 'admin';
-    } else if (this.email.includes('patient')) {
-      role = 'patient';
-    }
-
-    // Store mock user data
+    // Mock login
     localStorage.setItem('currentUser', JSON.stringify({
       email: this.email,
-      role: role,
-      name: role.charAt(0).toUpperCase() + role.slice(1) + ' User'
+      fullName: 'Dr. Ahmed Hassan',
+      clinicName: 'SkinCare Clinic'
     }));
 
-    // Redirect based on role
-    this.redirectToRoleDashboard(role);
+    this.router.navigate(['/doctor']);
   }
 
-  quickLogin(role: string) {
-    const emails = {
-      patient: 'patient@test.com',
-      doctor: 'doctor@test.com',
-      admin: 'admin@test.com'
-    };
-
-    this.email = emails[role as keyof typeof emails];
-    this.password = 'demo123';
-    
-    // Store mock user
+  demoLogin() {
     localStorage.setItem('currentUser', JSON.stringify({
-      email: this.email,
-      role: role,
-      name: role.charAt(0).toUpperCase() + role.slice(1) + ' Demo'
+      email: 'demo@skinvision.com',
+      fullName: 'Dr. Ahmed Hassan',
+      clinicName: 'SkinCare Clinic'
     }));
 
-    this.redirectToRoleDashboard(role);
-  }
-
-  private redirectToRoleDashboard(role: string) {
-    const routes: { [key: string]: string } = {
-      patient: '/patient',
-      doctor: '/doctor',
-      admin: '/admin'
-    };
-
-    this.router.navigate([routes[role]]);
+    this.router.navigate(['/doctor']);
   }
 }
-
-

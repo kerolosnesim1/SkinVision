@@ -6,11 +6,19 @@ export const DOCTOR_ROUTES: Routes = [
     loadComponent: () => import('./dashboard.component').then(m => m.DoctorDashboardComponent)
   },
   {
-    path: 'case/:id',
-    loadComponent: () => import('./case-review.component').then(m => m.CaseReviewComponent)
+    path: 'examination/new',
+    loadComponent: () => import('./new-examination.component').then(m => m.NewExaminationComponent)
   },
   {
-    path: 'cases',
-    loadComponent: () => import('./cases-list.component').then(m => m.DoctorCasesListComponent)
+    path: 'examination/:id',
+    loadComponent: () => import('./view-examination.component').then(m => m.ViewExaminationComponent)
+  },
+  {
+    path: 'examinations',
+    loadComponent: () => import('./examinations-list.component').then(m => m.ExaminationsListComponent)
+  },
+  {
+    path: 'profile',
+    loadComponent: () => import('./profile.component').then(m => m.DoctorProfileComponent)
   }
 ];

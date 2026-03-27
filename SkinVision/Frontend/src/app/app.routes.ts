@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -34,16 +35,9 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/static/privacy.component').then(m => m.PrivacyComponent)
   },
   {
-    path: 'patient',
-    loadChildren: () => import('./pages/patient/patient.routes').then(m => m.PATIENT_ROUTES)
-  },
-  {
     path: 'doctor',
+    canMatch: [authGuard],
     loadChildren: () => import('./pages/doctor/doctor.routes').then(m => m.DOCTOR_ROUTES)
-  },
-  {
-    path: 'admin',
-    loadChildren: () => import('./pages/admin/admin.routes').then(m => m.ADMIN_ROUTES)
   },
   { path: '**', redirectTo: '' }
 ];

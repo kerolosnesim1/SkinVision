@@ -1,6 +1,7 @@
 import { Component, HostListener, OnInit } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +20,10 @@ export class App implements OnInit {
 
   ngOnInit() {
     this.checkUser();
-    this.router.events.subscribe(() => {
+    
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
       this.checkUser();
     });
   }
@@ -40,16 +44,6 @@ export class App implements OnInit {
 
   closeMobileMenu() {
     this.isMobileMenuOpen = false;
-  }
-
-  getDashboardLink(): string {
-    if (!this.currentUser) return '/';
-    const routes: { [key: string]: string } = {
-      patient: '/patient',
-      doctor: '/doctor',
-      admin: '/admin'
-    };
-    return routes[this.currentUser.role] || '/';
   }
 
   logout() {
