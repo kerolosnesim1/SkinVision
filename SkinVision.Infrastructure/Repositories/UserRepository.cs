@@ -14,6 +14,11 @@ public class UserRepository : IUserRepository
         _context = context;
     }
 
+    public User? FindById(int userId)
+    {
+        return _context.Users.Find(userId);
+    }
+
     public User? Add(User user)
     {
         var addedUser = _context.Users.Add(user).Entity;

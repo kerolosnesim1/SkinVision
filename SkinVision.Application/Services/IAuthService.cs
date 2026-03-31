@@ -6,4 +6,5 @@ public interface IAuthService
 {
     LoginResponseDto? Login(LoginRequestDto request);
     RegisterResponseDto? Register(RegisterRequestDto request);
+    bool ChangePassword(int userId, ChangePasswordDto request);
 }

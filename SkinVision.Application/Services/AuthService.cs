@@ -89,8 +89,20 @@ public class AuthService : IAuthService
             }
         };
     }
-    
-    
+    public bool ChangePassword(int userId, ChangePasswordDto request)
+    {
+        var user = _userRepository.FindById(userId);
+        if (user == null)
+            return false;
+
+        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            return false;
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        _userRepository.Update(user);
+        return true;
+    }
+
     private string GenerateJwtToken(User user)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
