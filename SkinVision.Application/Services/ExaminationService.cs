@@ -39,7 +39,7 @@ public class ExaminationService : IExaminationService
             FollowUp = dto.FollowUp,
             RiskLevel = dto.RiskLevel,
             FollowUpDate = dto.FollowUpDate,
-            Status = "Completed",
+            Status = dto.Status ??"InProgress",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -47,9 +47,32 @@ public class ExaminationService : IExaminationService
         var created = await _examinationRepository.AddAsync(examination);
         return MapToExaminationDto(created);
     }
-
-    public async Task<bool> DeleteExaminationAsync(int id)
+    public async Task<ExaminationDto?> UpdateExaminationAsync(int doctorId, int id, UpdateExaminationDto dto)
     {
+        var existingExamination = await _examinationRepository.GetByIdWithDetailsAsync(id);
+        if (existingExamination == null || existingExamination.DoctorId != doctorId)
+        {
+            return null;
+        }
+        existingExamination.Diagnosis = dto.Diagnosis ?? existingExamination.Diagnosis;
+        existingExamination.Treatment = dto.Treatment ?? existingExamination.Treatment;
+        existingExamination.Status = dto.Status ?? existingExamination.Status;
+        existingExamination.FollowUp = dto.FollowUp ?? existingExamination.FollowUp;
+        existingExamination.RiskLevel = dto.RiskLevel ?? existingExamination.RiskLevel;
+        existingExamination.FollowUpDate = dto.FollowUpDate ?? existingExamination.FollowUpDate;
+        existingExamination.UpdatedAt = DateTime.UtcNow;
+
+        await _examinationRepository.UpdateAsync(existingExamination);
+        return MapToExaminationDto(existingExamination);
+
+    }
+
+    public async Task<bool> DeleteExaminationAsync(int doctorId, int id)
+    {
+        var examination = await _examinationRepository.FindAsync(id);
+        if (examination == null || examination.DoctorId != doctorId)
+            return false;
+
         return await _examinationRepository.DeleteAsync(id);
     }
 
@@ -74,6 +97,7 @@ public class ExaminationService : IExaminationService
         return new ExaminationDto
         {
             DiagnosisId = e.DiagnosisId,
+            DoctorId = e.DoctorId,
             PatientName = e.PatientName,
             PatientPhone = e.PatientPhone,
             PatientAge = e.PatientAge,
@@ -83,6 +107,7 @@ public class ExaminationService : IExaminationService
             FollowUp = e.FollowUp,
             RiskLevel = e.RiskLevel,
             FollowUpDate = e.FollowUpDate,
+            Status = e.Status,
             CreatedAt = e.CreatedAt,
             UpdatedAt = e.UpdatedAt,
             Images = e.Images?.Select(MapToImageDto).ToList() ?? new(),

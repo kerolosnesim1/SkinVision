@@ -7,8 +7,8 @@ namespace SkinVision.Application.Services
         Task<ExaminationDto?> GetExaminationAsync(int id);
         Task<List<ExaminationListItemDto>> GetExaminationsAsync(int? doctorId = null, string? searchQuery = null);
         Task<ExaminationDto> CreateExaminationAsync(int doctorId, CreateExaminationDto dto);
-        // Task<ExaminationDto?> UpdateExaminationAsync(int id, UpdateExaminationDto dto); // Commenting out until Update DTO is defined or not needed
-        Task<bool> DeleteExaminationAsync(int id);
+        Task<ExaminationDto?> UpdateExaminationAsync(int doctorId, int id, UpdateExaminationDto dto);
+        Task<bool> DeleteExaminationAsync(int doctorId, int id);
         Task<ExaminationStatsDto> GetStatsAsync(int doctorId);
     }
 }

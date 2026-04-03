@@ -6,6 +6,7 @@ namespace SkinVision.Application.DTOs;
 public class ExaminationDto
 {
     public int DiagnosisId { get; set; }
+    public int DoctorId { get; set; }
     public string PatientName { get; set; } = null!;
     public string? PatientPhone { get; set; }
     public int? PatientAge { get; set; }
@@ -15,6 +16,7 @@ public class ExaminationDto
     public string? FollowUp { get; set; }
     public string? RiskLevel { get; set; }
     public DateTime? FollowUpDate { get; set; }
+    public string? Status { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
@@ -31,10 +33,20 @@ public class CreateExaminationDto
     public string Reason { get; set; } = null!;
     public string? Diagnosis { get; set; }
     public string? Treatment { get; set; }
+    public string? Status { get; set; }
     public string? FollowUp { get; set; }
     public string? RiskLevel { get; set; }
     public DateTime? FollowUpDate { get; set; }
     public List<int> ImageIds { get; set; } = new();
+}
+public class UpdateExaminationDto
+{
+    public string? Diagnosis { get; set;}
+    public string? Treatment { get; set;}
+    public string? FollowUp { get; set;}
+    public string? RiskLevel { get; set;}
+    public DateTime? FollowUpDate { get; set; }
+    public string? Status { get; set; }
 }
 
 public class ExaminationListItemDto

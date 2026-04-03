@@ -2,13 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkinVision.Application.DTOs;
 using SkinVision.Application.Services;
-using System.Security.Claims;
+
 namespace SkinVision.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-[Authorize]
-public class ExaminationsController : ControllerBase
+[Authorize(Roles = "doctor")]
+public class ExaminationsController : BaseApiController
 {
     private readonly IExaminationService _examinationService;
 
@@ -20,46 +18,64 @@ public class ExaminationsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetExaminations([FromQuery] string? searchQuery)
     {
-        var UserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(UserIdClaim)  || !int.TryParse(UserIdClaim, out int doctorId))
-        {
+        var doctorId = GetCurrentUserId();
+        if (doctorId == null)
             return Unauthorized();
-        }
 
-        var examinations = await _examinationService.GetExaminationsAsync(doctorId, searchQuery);
+        var examinations = await _examinationService.GetExaminationsAsync(doctorId.Value, searchQuery);
         return Ok(examinations);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetExamination(int id)
     {
-        var examination = await _examinationService.GetExaminationAsync(id);
+        var doctorId = GetCurrentUserId();
+        if (doctorId == null)
+            return Unauthorized();
 
+        var examination = await _examinationService.GetExaminationAsync(id);
         if (examination == null)
             return NotFound();
 
+        if (examination.DoctorId != doctorId.Value)
+            return Forbid();
+
         return Ok(examination);
     }
-    
+
     [HttpPost]
     public async Task<IActionResult> CreateExamination([FromBody] CreateExaminationDto dto)
     {
-        var UserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(UserIdClaim)|| !int.TryParse(UserIdClaim, out int doctorId))
-        {
-            return Unauthorized(); 
-        }
+        var doctorId = GetCurrentUserId();
+        if (doctorId == null)
+            return Unauthorized();
 
-        
-        var examination = await _examinationService.CreateExaminationAsync(doctorId, dto);
+        var examination = await _examinationService.CreateExaminationAsync(doctorId.Value, dto);
         return CreatedAtAction(nameof(GetExamination), new { id = examination.DiagnosisId }, examination);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateExamination(int id, [FromBody] UpdateExaminationDto dto)
+    {
+        var doctorId = GetCurrentUserId();
+        if (doctorId == null)
+            return Unauthorized();
+
+        var result = await _examinationService.UpdateExaminationAsync(doctorId.Value, id, dto);
+        if (result == null)
+            return NotFound();
+
+        return Ok(result);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteExamination(int id)
     {
-        var result = await _examinationService.DeleteExaminationAsync(id);
+        var doctorId = GetCurrentUserId();
+        if (doctorId == null)
+            return Unauthorized();
 
+        var result = await _examinationService.DeleteExaminationAsync(doctorId.Value, id);
         if (!result)
             return NotFound();
 
@@ -69,12 +85,11 @@ public class ExaminationsController : ControllerBase
     [HttpGet("stats")]
     public async Task<IActionResult> GetStats()
     {
-        var UserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(UserIdClaim) || !int.TryParse(UserIdClaim, out int doctorId))
-        {
+        var doctorId = GetCurrentUserId();
+        if (doctorId == null)
             return Unauthorized();
-        }
-        var stats = await _examinationService.GetStatsAsync(doctorId);
+
+        var stats = await _examinationService.GetStatsAsync(doctorId.Value);
         return Ok(stats);
     }
 }

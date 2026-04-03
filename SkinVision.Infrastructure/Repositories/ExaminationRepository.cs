@@ -61,6 +61,11 @@ public class ExaminationRepository : IExaminationRepository
         await _context.SaveChangesAsync();
         return true;
     }
+    public async Task<Examination> UpdateAsync(Examination examination)
+    {
+        await _context.SaveChangesAsync();
+        return examination;
+    }
 
     public async Task<int> CountByDoctorAsync(int doctorId)
     {
