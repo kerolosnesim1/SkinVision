@@ -10,10 +10,7 @@ public partial class DoctorProfile
     public string? FullName { get; set; }
     public string? ClinicName { get; set; }
     public string? Specialization { get; set; }
-
     public int? YearsExperience { get; set; }
-
-    public string? HospitalAffiliation { get; set; }
     public string? ClinicAddress { get; set; }
     public string? Phone { get; set; }
 

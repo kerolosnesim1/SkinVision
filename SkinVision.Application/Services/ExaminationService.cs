@@ -19,9 +19,9 @@ public class ExaminationService : IExaminationService
         return examination == null ? null : MapToExaminationDto(examination);
     }
 
-    public async Task<List<ExaminationListItemDto>> GetExaminationsAsync(int? doctorId = null, string? searchQuery = null)
+    public async Task<List<ExaminationListItemDto>> GetExaminationsAsync(int? doctorId = null, string? searchQuery = null, string? riskLevel = null)
     {
-        var examinations = await _examinationRepository.GetFilteredAsync(doctorId, searchQuery);
+        var examinations = await _examinationRepository.GetFilteredAsync(doctorId, searchQuery, riskLevel);
         return examinations.Select(MapToExaminationListDto).ToList();
     }
 

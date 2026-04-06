@@ -85,7 +85,6 @@ public class AuthService : IAuthService
                 Phone = user.DoctorProfile.Phone,
                 Specialization = user.DoctorProfile.Specialization,
                 YearsExperience = user.DoctorProfile.YearsExperience,
-                HospitalAffiliation = user.DoctorProfile.HospitalAffiliation
             }
         };
     }

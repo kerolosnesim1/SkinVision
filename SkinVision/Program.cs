@@ -35,10 +35,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 // Register repositories (Infrastructure)
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IExaminationRepository, ExaminationRepository>();
+builder.Services.AddScoped<IDoctorProfileRepository, DoctorProfileRepository>();
 
 // Register services (Application)
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IExaminationService, ExaminationService>();
+builder.Services.AddScoped<IDoctorProfileService, DoctorProfileService>();
 
 // Configure CORS for Angular frontend
 builder.Services.AddCors(options =>

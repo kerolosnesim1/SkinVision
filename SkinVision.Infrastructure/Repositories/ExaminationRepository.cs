@@ -24,7 +24,7 @@ public class ExaminationRepository : IExaminationRepository
             .FirstOrDefaultAsync(e => e.DiagnosisId == id);
     }
 
-    public async Task<List<Examination>> GetFilteredAsync(int? doctorId, string? searchQuery)
+    public async Task<List<Examination>> GetFilteredAsync(int? doctorId, string? searchQuery, string? riskLevel)
     {
         var query = _context.Examinations.AsQueryable();
 
@@ -33,6 +33,9 @@ public class ExaminationRepository : IExaminationRepository
 
         if (!string.IsNullOrWhiteSpace(searchQuery))
             query = query.Where(e => e.PatientName.Contains(searchQuery) || e.Diagnosis!.Contains(searchQuery));
+
+        if (!string.IsNullOrWhiteSpace(riskLevel))
+            query = query.Where(e => e.RiskLevel == riskLevel);
 
         return await query
             .OrderByDescending(e => e.CreatedAt)

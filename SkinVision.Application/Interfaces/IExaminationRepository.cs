@@ -5,7 +5,7 @@ namespace SkinVision.Application.Interfaces;
 public interface IExaminationRepository
 {
     Task<Examination?> GetByIdWithDetailsAsync(int id);
-    Task<List<Examination>> GetFilteredAsync(int? doctorId, string? searchQuery);
+    Task<List<Examination>> GetFilteredAsync(int? doctorId, string? searchQuery, string? riskLevel);
     Task<Examination> AddAsync(Examination examination);
     Task<Examination> UpdateAsync(Examination examination);
     Task<Examination?> FindAsync(int id);
