@@ -9,10 +9,12 @@ namespace SkinVision.Controllers;
 public class ExaminationsController : BaseApiController
 {
     private readonly IExaminationService _examinationService;
+    private readonly IImageService _imageService;
 
-    public ExaminationsController(IExaminationService examinationService)
+    public ExaminationsController(IExaminationService examinationService,IImageService imageService)
     {
         _examinationService = examinationService;
+        _imageService = imageService;
     }
 
     [HttpGet]
@@ -52,6 +54,22 @@ public class ExaminationsController : BaseApiController
 
         var examination = await _examinationService.CreateExaminationAsync(doctorId.Value, dto);
         return CreatedAtAction(nameof(GetExamination), new { id = examination.DiagnosisId }, examination);
+    }
+    [HttpPost("{id}/images")]
+    public async Task<IActionResult> UploadImage(int id, IFormFile file, [FromForm] string? bodyPart)
+    {
+        var doctorId = GetCurrentUserId();
+        if (doctorId == null)
+            return Unauthorized();
+
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
+        var result = await _imageService.AddImageAsync(doctorId.Value, id, file.OpenReadStream(), file.FileName, bodyPart);
+        if (result == null)
+            return NotFound();
+
+        return CreatedAtAction(nameof(GetExamination), new { id }, result);
     }
 
     [HttpPut("{id}")]

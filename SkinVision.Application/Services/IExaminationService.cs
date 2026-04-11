@@ -10,5 +10,6 @@ namespace SkinVision.Application.Services
         Task<ExaminationDto?> UpdateExaminationAsync(int doctorId, int id, UpdateExaminationDto dto);
         Task<bool> DeleteExaminationAsync(int doctorId, int id);
         Task<ExaminationStatsDto> GetStatsAsync(int doctorId);
+        Task<ExaminationDto?> GetExaminationForDoctorAsync(int doctorId, int examinationId);
     }
 }

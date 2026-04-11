@@ -89,6 +89,13 @@ public class ExaminationService : IExaminationService
             AiAnalyses = aiAnalyses
         };
     }
+    public async Task<ExaminationDto?> GetExaminationForDoctorAsync(int doctorId, int examinationId)
+    {
+        var examination = await _examinationRepository.GetByIdWithDetailsAsync(examinationId);
+        if (examination == null || examination.DoctorId != doctorId)
+            return null;
+        return MapToExaminationDto(examination);
+    }
 
     private static ExaminationDto MapToExaminationDto(Examination e)
     {
@@ -121,7 +128,6 @@ public class ExaminationService : IExaminationService
                 Phone = e.Doctor.DoctorProfile.Phone,
                 Specialization = e.Doctor.DoctorProfile.Specialization,
                 YearsExperience = e.Doctor.DoctorProfile.YearsExperience,
-                HospitalAffiliation = e.Doctor.DoctorProfile.HospitalAffiliation
             }
         };
     }
@@ -140,7 +146,7 @@ public class ExaminationService : IExaminationService
         };
     }
 
-    private static ImageDto MapToImageDto(ExaminationImage i)
+    private static ImageDto MapToImageDto(ImageService i)
     {
         return new ImageDto
         {

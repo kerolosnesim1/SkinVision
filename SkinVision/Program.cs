@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using SkinVision.Application.Interfaces;
 using SkinVision.Application.Services;
 using SkinVision.Infrastructure.Context;
+using SkinVision.Infrastructure.InfraServices;
 using SkinVision.Infrastructure.Repositories;
-using Microsoft.IdentityModel.Tokens;
-
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,11 +36,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IExaminationRepository, ExaminationRepository>();
 builder.Services.AddScoped<IDoctorProfileRepository, DoctorProfileRepository>();
+builder.Services.AddScoped<IImageRepository, ImageRepository>();
 
 // Register services (Application)
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IExaminationService, ExaminationService>();
 builder.Services.AddScoped<IDoctorProfileService, DoctorProfileService>();
+builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>(); //local storage for development
 
 // Configure CORS for Angular frontend
 builder.Services.AddCors(options =>
@@ -73,6 +76,8 @@ app.UseCors("AllowAngular");
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseStaticFiles();
 
 app.MapControllers();
 
