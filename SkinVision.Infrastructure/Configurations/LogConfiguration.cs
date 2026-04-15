@@ -20,7 +20,7 @@ public class LogConfiguration : IEntityTypeConfiguration<Log>
             .HasMaxLength(50);
 
         builder.Property(l => l.Timestamp)
-            .HasDefaultValueSql("GETDATE()");
+            .HasDefaultValueSql("GETUTCDATE()");
 
         builder.HasOne(l => l.User)
             .WithMany()

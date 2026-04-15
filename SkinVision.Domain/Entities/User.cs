@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SkinVision.Domain.Enums;
 
 namespace SkinVision.Domain.Entities;
 
@@ -13,7 +14,7 @@ public partial class User
 
     public string PasswordHash { get; set; } = null!;
 
-    public string? Role { get; set; }
+    public UserRole? Role { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

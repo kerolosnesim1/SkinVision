@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SkinVision.Domain.Enums;
 
 namespace SkinVision.Application.DTOs;
 
@@ -16,7 +17,7 @@ public class ExaminationDto
     public string? FollowUp { get; set; }
     public string? RiskLevel { get; set; }
     public DateTime? FollowUpDate { get; set; }
-    public string? Status { get; set; }
+    public ExaminationStatus Status { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
@@ -33,7 +34,7 @@ public class CreateExaminationDto
     public string Reason { get; set; } = null!;
     public string? Diagnosis { get; set; }
     public string? Treatment { get; set; }
-    public string? Status { get; set; }
+    public ExaminationStatus Status { get; set; } = ExaminationStatus.InProgress;
     public string? FollowUp { get; set; }
     public string? RiskLevel { get; set; }
     public DateTime? FollowUpDate { get; set; }
@@ -46,7 +47,7 @@ public class UpdateExaminationDto
     public string? FollowUp { get; set;}
     public string? RiskLevel { get; set;}
     public DateTime? FollowUpDate { get; set; }
-    public string? Status { get; set; }
+    public ExaminationStatus? Status { get; set; }
 }
 
 public class ExaminationListItemDto

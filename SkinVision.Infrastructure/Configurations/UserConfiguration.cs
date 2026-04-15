@@ -14,21 +14,21 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(100);
 
+        builder.HasIndex(u => u.Username)
+            .IsUnique();
+
         builder.Property(u => u.Email)
             .IsRequired()
             .HasMaxLength(255);
 
+        builder.HasIndex(u => u.Email)
+            .IsUnique();
+
         builder.Property(u => u.PasswordHash)
             .IsRequired();
 
-        builder.Property(u => u.Role)
-            .HasMaxLength(50);
-
         builder.Property(u => u.CreatedAt)
-            .HasDefaultValueSql("GETDATE()");
-
-        builder.Property(u => u.UpdatedAt)
-            .HasDefaultValueSql("GETDATE()");
+            .HasDefaultValueSql("GETUTCDATE()");
 
         builder.HasOne(u => u.DoctorProfile)
             .WithOne(d => d.Doctor)

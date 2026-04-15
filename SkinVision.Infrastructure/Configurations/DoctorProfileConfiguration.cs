@@ -19,9 +19,6 @@ public class DoctorProfileConfiguration : IEntityTypeConfiguration<DoctorProfile
         builder.Property(d => d.Specialization)
             .HasMaxLength(200);
 
-        builder.Property(d => d.HospitalAffiliation)
-            .HasMaxLength(300);
-
         builder.Property(d => d.ClinicAddress)
             .HasMaxLength(500);
 

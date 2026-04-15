@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using SkinVision.Application.DTOs;
 using SkinVision.Application.Interfaces;
 using SkinVision.Domain.Entities;
+using SkinVision.Domain.Enums;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -11,26 +12,26 @@ namespace SkinVision.Application.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IConfiguration _configuration;
 
-    public AuthService(IUserRepository userRepository, IConfiguration configuration)
+    public AuthService(IUnitOfWork unitOfWork, IConfiguration configuration)
     {
-        _userRepository = userRepository;
+        _unitOfWork = unitOfWork;
         _configuration = configuration;
     }
 
-    public RegisterResponseDto? Register(RegisterRequestDto request)
+    public async Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request)
     {
-        if (_userRepository.FindByEmailWithProfile(request.Email) != null)
+        if (await _unitOfWork.Users.FindByEmailWithProfileAsync(request.Email) != null)
             return null;
 
-        var user = _userRepository.Add(new User
+        var user = await _unitOfWork.Users.AddAsync(new User
         {
             Username = request.FullName,
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = "doctor",
+            Role = UserRole.Doctor,
             DoctorProfile = new DoctorProfile
             {
                 FullName = request.FullName,
@@ -40,18 +41,20 @@ public class AuthService : IAuthService
             }
         });
 
-        var token = GenerateJwtToken(user!);
+        await _unitOfWork.SaveChangesAsync();
+
+        var token = GenerateJwtToken(user);
 
         return new RegisterResponseDto
         {
             Token = token,
-            User = MapToUserDto(user!)
+            User = MapToUserDto(user)
         };
     }
 
-    public LoginResponseDto? Login(LoginRequestDto request)
+    public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
     {
-        var user = _userRepository.FindByEmailWithProfile(request.Email);
+        var user = await _unitOfWork.Users.FindByEmailWithProfileAsync(request.Email);
 
         if (user == null)
             return null;
@@ -66,6 +69,21 @@ public class AuthService : IAuthService
             Token = token,
             User = MapToUserDto(user)
         };
+    }
+
+    public async Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto request)
+    {
+        var user = await _unitOfWork.Users.GetByIdAsync(userId);
+        if (user == null)
+            return false;
+
+        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            return false;
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        await _unitOfWork.Users.UpdateAsync(user);
+        await _unitOfWork.SaveChangesAsync();
+        return true;
     }
 
     private static UserDto MapToUserDto(User user)
@@ -88,19 +106,6 @@ public class AuthService : IAuthService
             }
         };
     }
-    public bool ChangePassword(int userId, ChangePasswordDto request)
-    {
-        var user = _userRepository.FindById(userId);
-        if (user == null)
-            return false;
-
-        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
-            return false;
-
-        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-        _userRepository.Update(user);
-        return true;
-    }
 
     private string GenerateJwtToken(User user)
     {
@@ -115,14 +120,14 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, user.Role ?? "patient")
+            new Claim(ClaimTypes.Role, (user.Role ?? UserRole.Patient).ToString())
         };
 
         var token = new JwtSecurityToken(
             issuer: _configuration["Jwt:Issuer"] ?? "SkinVision",
             audience: _configuration["Jwt:Audience"] ?? "SkinVision",
             claims: claims,
-            expires: DateTime.Now.AddDays(7),
+            expires: DateTime.UtcNow.AddDays(7),
             signingCredentials: credentials
         );
 

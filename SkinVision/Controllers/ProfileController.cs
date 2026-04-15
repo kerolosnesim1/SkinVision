@@ -5,7 +5,7 @@ using SkinVision.Application.Services;
 
 namespace SkinVision.Controllers;
 
-[Authorize(Roles = "doctor")]
+[Authorize(Roles = nameof(Domain.Enums.UserRole.Doctor))]
 public class ProfileController(IDoctorProfileService doctorProfileService) : BaseApiController
 {
     private readonly IDoctorProfileService _doctorProfileService = doctorProfileService;

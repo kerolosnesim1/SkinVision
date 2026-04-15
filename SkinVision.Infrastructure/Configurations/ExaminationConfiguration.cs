@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SkinVision.Domain.Entities;
+using SkinVision.Domain.Enums;
 
 namespace SkinVision.Infrastructure.Configurations;
 
@@ -27,16 +28,15 @@ public class ExaminationConfiguration : IEntityTypeConfiguration<Examination>
             .HasMaxLength(50);
 
         builder.Property(e => e.Status)
-            .HasMaxLength(50)
-            .HasDefaultValue("InProgress");
+            .HasDefaultValue(ExaminationStatus.InProgress);
 
         builder.Property(e => e.CreatedAt)
-            .HasDefaultValueSql("GETDATE()");
+            .HasDefaultValueSql("GETUTCDATE()");
 
         builder.HasOne(e => e.Doctor)
             .WithMany(u => u.Examinations)
             .HasForeignKey(e => e.DoctorId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.Patient)
             .WithMany(p => p.Examinations)

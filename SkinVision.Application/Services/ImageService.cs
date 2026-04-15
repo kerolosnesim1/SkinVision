@@ -1,39 +1,51 @@
-﻿using SkinVision.Application.Interfaces;
+﻿using SkinVision.Application.DTOs;
+using SkinVision.Application.Interfaces;
 using SkinVision.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace SkinVision.Application.Services
+namespace SkinVision.Application.Services;
+
+public class ImageService : IImageService
 {
-    public class ImageService(IImageRepository imageRepository, IExaminationService examinationService, IFileStorageService fileStorageService) : IImageService
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IExaminationService _examinationService;
+    private readonly IFileStorageService _fileStorageService;
+
+    public ImageService(IUnitOfWork unitOfWork, IExaminationService examinationService, IFileStorageService fileStorageService)
     {
-        private readonly IImageRepository _imageRepository = imageRepository;
-        private readonly IExaminationService _examinationService = examinationService;
-        private readonly IFileStorageService _fileStorageService = fileStorageService;
+        _unitOfWork = unitOfWork;
+        _examinationService = examinationService;
+        _fileStorageService = fileStorageService;
+    }
 
-        public async Task<ExaminationImage> AddImageAsync(int doctorId ,int examinationId, Stream fileStream, string fileName, string bodyPart)
+    public async Task<ImageDto?> AddImageAsync(int doctorId, int examinationId, Stream fileStream, string fileName, string? bodyPart, long fileSizeBytes)
+    {
+        var exam = await _examinationService.GetExaminationAsync(examinationId);
+        if (exam == null || exam.DoctorId != doctorId)
+            return null;
+
+        var savedPath = await _fileStorageService.SaveFileAsync(fileStream, fileName, Path.GetExtension(fileName));
+
+        var newImage = new ExaminationImage
         {
-           var exam = await _examinationService.GetExaminationAsync(examinationId);
-           if (exam == null || exam.DoctorId != doctorId ) return null;
+            DiagnosisId = examinationId,
+            FilePath = savedPath,
+            Format = Path.GetExtension(fileName),
+            Size = fileSizeBytes,
+            UploadDate = DateTime.UtcNow,
+            BodyPart = bodyPart
+        };
 
-           var savedPath = await _fileStorageService.SaveFileAsync(fileStream, fileName, Path.GetExtension(fileName));    
+        await _unitOfWork.Images.AddAsync(newImage);
+        await _unitOfWork.SaveChangesAsync();
 
-            var newImage = new ExaminationImage
-            {
-                DiagnosisId = examinationId,
-                FilePath = savedPath,
-                Format = Path.GetExtension(fileName),
-                Size = fileStream.Length,
-                UploadDate = DateTime.UtcNow,
-                BodyPart = bodyPart
-            };
-
-            return await _imageRepository.AddAsync(newImage);
-        }
-
-
+        return new ImageDto
+        {
+            ImageId = newImage.ImageId,
+            FilePath = newImage.FilePath,
+            Format = newImage.Format,
+            Size = newImage.Size,
+            UploadDate = newImage.UploadDate,
+            BodyPart = newImage.BodyPart
+        };
     }
 }

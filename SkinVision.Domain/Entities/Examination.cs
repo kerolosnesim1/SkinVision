@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+using SkinVision.Domain.Enums;
 
 namespace SkinVision.Domain.Entities;
 
 public class Examination
 {
-    [Key]
     public int DiagnosisId { get; set; }
     public int DoctorId { get; set; }
 
@@ -24,9 +23,9 @@ public class Examination
     public string? RiskLevel { get; set; }
     public DateTime? FollowUpDate { get; set; }
 
-    public string Status { get; set; } = "InProgress";
+    public ExaminationStatus Status { get; set; } = ExaminationStatus.InProgress;
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
     public virtual User Doctor { get; set; } = null!;

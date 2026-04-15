@@ -1,17 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace SkinVision.Domain.Entities;
 
 public class Prediction
 {
-    [Key]
     public int PredictionId { get; set; }
     public int ImageId { get; set; }
 
-    public string? Classification { get; set; } 
-    public double? ConfidenceScore { get; set; } 
+    public string? Classification { get; set; }
+    public decimal? ConfidenceScore { get; set; } 
     public string? ModelVersion { get; set; }
     public DateTime? CreatedAt { get; set; }
     

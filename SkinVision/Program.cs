@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SkinVision.Application.Interfaces;
 using SkinVision.Application.Services;
+using SkinVision.Extensions;
 using SkinVision.Infrastructure.Context;
 using SkinVision.Infrastructure.InfraServices;
 using SkinVision.Infrastructure.Repositories;
@@ -32,18 +33,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     };
 });
 
-// Register repositories (Infrastructure)
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IExaminationRepository, ExaminationRepository>();
-builder.Services.AddScoped<IDoctorProfileRepository, DoctorProfileRepository>();
-builder.Services.AddScoped<IImageRepository, ImageRepository>();
+// Register Unit of Work (Infrastructure)
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Register services (Application)
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IExaminationService, ExaminationService>();
 builder.Services.AddScoped<IDoctorProfileService, DoctorProfileService>();
 builder.Services.AddScoped<IImageService, ImageService>();
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>(); //local storage for development
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
 // Configure CORS for Angular frontend
 builder.Services.AddCors(options =>
@@ -56,9 +54,8 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSkinVisionSwagger();
 
 var app = builder.Build();
 

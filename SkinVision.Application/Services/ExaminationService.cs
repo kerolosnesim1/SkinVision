@@ -6,22 +6,30 @@ namespace SkinVision.Application.Services;
 
 public class ExaminationService : IExaminationService
 {
-    private readonly IExaminationRepository _examinationRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public ExaminationService(IExaminationRepository examinationRepository)
+    public ExaminationService(IUnitOfWork unitOfWork)
     {
-        _examinationRepository = examinationRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<ExaminationDto?> GetExaminationAsync(int id)
     {
-        var examination = await _examinationRepository.GetByIdWithDetailsAsync(id);
+        var examination = await _unitOfWork.Examinations.GetByIdWithDetailsAsync(id);
         return examination == null ? null : MapToExaminationDto(examination);
+    }
+
+    public async Task<ExaminationDto?> GetExaminationForDoctorAsync(int doctorId, int examinationId)
+    {
+        var examination = await _unitOfWork.Examinations.GetByIdWithDetailsAsync(examinationId);
+        if (examination == null || examination.DoctorId != doctorId)
+            return null;
+        return MapToExaminationDto(examination);
     }
 
     public async Task<List<ExaminationListItemDto>> GetExaminationsAsync(int? doctorId = null, string? searchQuery = null, string? riskLevel = null)
     {
-        var examinations = await _examinationRepository.GetFilteredAsync(doctorId, searchQuery, riskLevel);
+        var examinations = await _unitOfWork.Examinations.GetFilteredAsync(doctorId, searchQuery, riskLevel);
         return examinations.Select(MapToExaminationListDto).ToList();
     }
 
@@ -39,48 +47,49 @@ public class ExaminationService : IExaminationService
             FollowUp = dto.FollowUp,
             RiskLevel = dto.RiskLevel,
             FollowUpDate = dto.FollowUpDate,
-            Status = dto.Status ??"InProgress",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            Status = dto.Status,
         };
 
-        var created = await _examinationRepository.AddAsync(examination);
-        return MapToExaminationDto(created);
+        await _unitOfWork.Examinations.AddAsync(examination);
+        await _unitOfWork.SaveChangesAsync();
+        return MapToExaminationDto(examination);
     }
+
     public async Task<ExaminationDto?> UpdateExaminationAsync(int doctorId, int id, UpdateExaminationDto dto)
     {
-        var existingExamination = await _examinationRepository.GetByIdWithDetailsAsync(id);
+        var existingExamination = await _unitOfWork.Examinations.GetByIdWithDetailsAsync(id);
         if (existingExamination == null || existingExamination.DoctorId != doctorId)
-        {
             return null;
-        }
+
         existingExamination.Diagnosis = dto.Diagnosis ?? existingExamination.Diagnosis;
         existingExamination.Treatment = dto.Treatment ?? existingExamination.Treatment;
-        existingExamination.Status = dto.Status ?? existingExamination.Status;
+        if (dto.Status.HasValue)
+            existingExamination.Status = dto.Status.Value;
         existingExamination.FollowUp = dto.FollowUp ?? existingExamination.FollowUp;
         existingExamination.RiskLevel = dto.RiskLevel ?? existingExamination.RiskLevel;
         existingExamination.FollowUpDate = dto.FollowUpDate ?? existingExamination.FollowUpDate;
-        existingExamination.UpdatedAt = DateTime.UtcNow;
 
-        await _examinationRepository.UpdateAsync(existingExamination);
+        await _unitOfWork.Examinations.UpdateAsync(existingExamination);
+        await _unitOfWork.SaveChangesAsync();
         return MapToExaminationDto(existingExamination);
-
     }
 
     public async Task<bool> DeleteExaminationAsync(int doctorId, int id)
     {
-        var examination = await _examinationRepository.FindAsync(id);
+        var examination = await _unitOfWork.Examinations.GetByIdAsync(id);
         if (examination == null || examination.DoctorId != doctorId)
             return false;
 
-        return await _examinationRepository.DeleteAsync(id);
+        await _unitOfWork.Examinations.DeleteByIdAsync(id);
+        await _unitOfWork.SaveChangesAsync();
+        return true;
     }
 
     public async Task<ExaminationStatsDto> GetStatsAsync(int doctorId)
     {
-        var total = await _examinationRepository.CountByDoctorAsync(doctorId);
-        var today = await _examinationRepository.CountByDoctorTodayAsync(doctorId);
-        var aiAnalyses = await _examinationRepository.CountAiAnalysesByDoctorAsync(doctorId);
+        var total = await _unitOfWork.Examinations.CountByDoctorAsync(doctorId);
+        var today = await _unitOfWork.Examinations.CountByDoctorTodayAsync(doctorId);
+        var aiAnalyses = await _unitOfWork.Examinations.CountAiAnalysesByDoctorAsync(doctorId);
 
         return new ExaminationStatsDto
         {
@@ -88,13 +97,6 @@ public class ExaminationService : IExaminationService
             Today = today,
             AiAnalyses = aiAnalyses
         };
-    }
-    public async Task<ExaminationDto?> GetExaminationForDoctorAsync(int doctorId, int examinationId)
-    {
-        var examination = await _examinationRepository.GetByIdWithDetailsAsync(examinationId);
-        if (examination == null || examination.DoctorId != doctorId)
-            return null;
-        return MapToExaminationDto(examination);
     }
 
     private static ExaminationDto MapToExaminationDto(Examination e)
@@ -146,7 +148,7 @@ public class ExaminationService : IExaminationService
         };
     }
 
-    private static ImageDto MapToImageDto(ImageService i)
+    private static ImageDto MapToImageDto(ExaminationImage i)
     {
         return new ImageDto
         {

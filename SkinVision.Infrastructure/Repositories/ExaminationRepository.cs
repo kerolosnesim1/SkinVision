@@ -5,13 +5,10 @@ using SkinVision.Infrastructure.Context;
 
 namespace SkinVision.Infrastructure.Repositories;
 
-public class ExaminationRepository : IExaminationRepository
+public class ExaminationRepository : BaseRepository<Examination>, IExaminationRepository
 {
-    private readonly AppDbContext _context;
-
-    public ExaminationRepository(AppDbContext context)
+    public ExaminationRepository(AppDbContext context) : base(context)
     {
-        _context = context;
     }
 
     public async Task<Examination?> GetByIdWithDetailsAsync(int id)
@@ -40,34 +37,6 @@ public class ExaminationRepository : IExaminationRepository
         return await query
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync();
-    }
-
-    public async Task<Examination> AddAsync(Examination examination)
-    {
-        _context.Examinations.Add(examination);
-        await _context.SaveChangesAsync();
-        return examination;
-    }
-
-    public async Task<Examination?> FindAsync(int id)
-    {
-        return await _context.Examinations.FindAsync(id);
-    }
-
-    public async Task<bool> DeleteAsync(int id)
-    {
-        var examination = await _context.Examinations.FindAsync(id);
-        if (examination == null)
-            return false;
-
-        _context.Examinations.Remove(examination);
-        await _context.SaveChangesAsync();
-        return true;
-    }
-    public async Task<Examination> UpdateAsync(Examination examination)
-    {
-        await _context.SaveChangesAsync();
-        return examination;
     }
 
     public async Task<int> CountByDoctorAsync(int doctorId)

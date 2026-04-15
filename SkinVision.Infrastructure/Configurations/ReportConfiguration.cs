@@ -17,7 +17,7 @@ public class ReportConfiguration : IEntityTypeConfiguration<Report>
             .HasMaxLength(50);
 
         builder.Property(r => r.CreatedAt)
-            .HasDefaultValueSql("GETDATE()");
+            .HasDefaultValueSql("GETUTCDATE()");
 
         builder.HasOne(r => r.Examination)
             .WithMany(e => e.Reports)

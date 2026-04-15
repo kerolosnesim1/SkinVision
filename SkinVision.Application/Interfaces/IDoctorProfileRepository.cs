@@ -2,8 +2,7 @@
 
 namespace SkinVision.Application.Interfaces;
 
-public interface IDoctorProfileRepository
+public interface IDoctorProfileRepository : IBaseRepository<DoctorProfile>
 {
     Task<DoctorProfile?> GetByUserIdAsync(int userId);
-    Task<DoctorProfile> UpdateAsync(DoctorProfile profile);
 }

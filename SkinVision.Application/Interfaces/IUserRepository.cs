@@ -2,10 +2,7 @@ using SkinVision.Domain.Entities;
 
 namespace SkinVision.Application.Interfaces;
 
-public interface IUserRepository
+public interface IUserRepository : IBaseRepository<User>
 {
-    User? FindById(int userId);
-    User? FindByEmailWithProfile(string email);
-    User? Add(User user);
-    void Update(User user);
+    Task<User?> FindByEmailWithProfileAsync(string email);
 }

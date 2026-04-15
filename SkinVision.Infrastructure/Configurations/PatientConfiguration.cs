@@ -17,7 +17,10 @@ public class PatientConfiguration : IEntityTypeConfiguration<Patient>
         builder.Property(p => p.Phone)
             .HasMaxLength(50);
 
+        builder.Property(p => p.DateOfBirth)
+            .HasColumnType("date");
+
         builder.Property(p => p.CreatedAt)
-            .HasDefaultValueSql("GETDATE()");
+            .HasDefaultValueSql("GETUTCDATE()");
     }
 }

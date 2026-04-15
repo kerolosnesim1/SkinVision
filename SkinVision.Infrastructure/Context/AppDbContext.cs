@@ -24,8 +24,55 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 
-    internal void saveChanges()
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
-        throw new NotImplementedException();
+        ApplyAuditTimestamps();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        ApplyAuditTimestamps();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    private void ApplyAuditTimestamps()
+    {
+        var utcNow = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries<User>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAt ??= utcNow;
+                entry.Entity.UpdatedAt ??= utcNow;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdatedAt = utcNow;
+            }
+        }
+
+        foreach (var entry in ChangeTracker.Entries<Patient>())
+        {
+            if (entry.State == EntityState.Added && entry.Entity.CreatedAt == default)
+            {
+                entry.Entity.CreatedAt = utcNow;
+            }
+        }
+
+        foreach (var entry in ChangeTracker.Entries<Examination>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                if (entry.Entity.CreatedAt == default)
+                    entry.Entity.CreatedAt = utcNow;
+                entry.Entity.UpdatedAt ??= utcNow;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdatedAt = utcNow;
+            }
+        }
     }
 }

@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace SkinVision.Domain.Entities;
 
 public class ExaminationImage
 {
-    [Key]
     public int ImageId { get; set; }
     public int DiagnosisId { get; set; } 
 

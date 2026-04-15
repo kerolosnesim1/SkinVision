@@ -5,39 +5,16 @@ using SkinVision.Infrastructure.Context;
 
 namespace SkinVision.Infrastructure.Repositories;
 
-public class UserRepository : IUserRepository
+public class UserRepository : BaseRepository<User>, IUserRepository
 {
-    private readonly AppDbContext _context;
-
-    public UserRepository(AppDbContext context)
+    public UserRepository(AppDbContext context) : base(context)
     {
-        _context = context;
     }
 
-    public User? FindById(int userId)
+    public async Task<User?> FindByEmailWithProfileAsync(string email)
     {
-        return _context.Users.Find(userId);
-    }
-
-    public User? Add(User user)
-    {
-        var addedUser = _context.Users.Add(user).Entity;
-        _context.SaveChanges();
-        return addedUser;
-
-    }
-
-
-    public User? FindByEmailWithProfile(string email)
-    {
-        return _context.Users
+        return await _context.Users
             .Include(u => u.DoctorProfile)
-            .FirstOrDefault(u => u.Email == email);
-    }
-
-    public void Update(User user)
-    {
-        _context.Users.Update(user);
-        _context.SaveChanges();
+            .FirstOrDefaultAsync(u => u.Email == email);
     }
 }

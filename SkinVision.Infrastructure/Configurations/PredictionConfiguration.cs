@@ -19,8 +19,11 @@ public class PredictionConfiguration : IEntityTypeConfiguration<Prediction>
         builder.Property(p => p.ModelVersion)
             .HasMaxLength(50);
 
+        builder.Property(p => p.ConfidenceScore)
+            .HasPrecision(7, 6);
+
         builder.Property(p => p.CreatedAt)
-            .HasDefaultValueSql("GETDATE()");
+            .HasDefaultValueSql("GETUTCDATE()");
 
         builder.HasOne(p => p.Image)
             .WithOne(i => i.AiResult) // One-to-One

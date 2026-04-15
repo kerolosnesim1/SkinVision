@@ -21,7 +21,7 @@ public class PredictionDto
 {
     public int PredictionId { get; set; }
     public string? Classification { get; set; }
-    public double? ConfidenceScore { get; set; }
+    public decimal? ConfidenceScore { get; set; }
     public string? ModelVersion { get; set; }
     public DateTime? CreatedAt { get; set; }
     public List<string> Findings { get; set; } = new();

@@ -1,14 +1,8 @@
-﻿using SkinVision.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SkinVision.Application.DTOs;
 
-namespace SkinVision.Application.Services
+namespace SkinVision.Application.Services;
+
+public interface IImageService
 {
-    public interface IImageService
-    {
-        Task<ExaminationImage> AddImageAsync(int doctorId, int examinationId, Stream fileStream, string fileName, string bodyPart);
-    }
+    Task<ImageDto?> AddImageAsync(int doctorId, int examinationId, Stream fileStream, string fileName, string? bodyPart, long fileSizeBytes);
 }

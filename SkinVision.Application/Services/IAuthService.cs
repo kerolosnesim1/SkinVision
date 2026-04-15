@@ -4,7 +4,7 @@ namespace SkinVision.Application.Services;
 
 public interface IAuthService
 {
-    LoginResponseDto? Login(LoginRequestDto request);
-    RegisterResponseDto? Register(RegisterRequestDto request);
-    bool ChangePassword(int userId, ChangePasswordDto request);
+    Task<LoginResponseDto?> LoginAsync(LoginRequestDto request);
+    Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request);
+    Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto request);
 }

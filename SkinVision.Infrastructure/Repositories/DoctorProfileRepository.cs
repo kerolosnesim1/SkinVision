@@ -5,19 +5,15 @@ using SkinVision.Infrastructure.Context;
 
 namespace SkinVision.Infrastructure.Repositories;
 
-public class DoctorProfileRepository(AppDbContext context) : IDoctorProfileRepository
+public class DoctorProfileRepository : BaseRepository<DoctorProfile>, IDoctorProfileRepository
 {
-    private readonly AppDbContext _context = context;
+    public DoctorProfileRepository(AppDbContext context) : base(context)
+    {
+    }
 
     public async Task<DoctorProfile?> GetByUserIdAsync(int userId)
     {
         return await _context.DoctorProfiles
             .FirstOrDefaultAsync(dp => dp.DoctorId == userId);
-    }
-
-    public async Task<DoctorProfile> UpdateAsync(DoctorProfile profile)
-    {
-        await _context.SaveChangesAsync();
-        return profile;
     }
 }

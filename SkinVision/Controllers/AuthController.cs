@@ -15,9 +15,9 @@ public class AuthController : BaseApiController
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequestDto request)
+    public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
-        var response = _authService.Login(request);
+        var response = await _authService.LoginAsync(request);
 
         if (response == null)
             return Unauthorized(new { message = "Invalid email or password" });
@@ -26,9 +26,9 @@ public class AuthController : BaseApiController
     }
 
     [HttpPost("register")]
-    public IActionResult Register([FromBody] RegisterRequestDto request)
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
-        var response = _authService.Register(request);
+        var response = await _authService.RegisterAsync(request);
         if (response == null)
             return BadRequest(new { message = "Registration failed. Email might already be in use." });
 
@@ -37,13 +37,13 @@ public class AuthController : BaseApiController
 
     [Authorize]
     [HttpPost("change-password")]
-    public IActionResult ChangePassword([FromBody] ChangePasswordDto request)
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto request)
     {
         var userId = GetCurrentUserId();
         if (userId == null)
             return Unauthorized(new { message = "Invalid token" });
 
-        var success = _authService.ChangePassword(userId.Value, request);
+        var success = await _authService.ChangePasswordAsync(userId.Value, request);
         if (!success)
             return BadRequest(new { message = "Current password is incorrect" });
 

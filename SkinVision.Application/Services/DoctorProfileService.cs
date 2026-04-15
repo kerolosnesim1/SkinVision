@@ -4,19 +4,24 @@ using SkinVision.Domain.Entities;
 
 namespace SkinVision.Application.Services;
 
-public class DoctorProfileService(IDoctorProfileRepository doctorProfileRepository) : IDoctorProfileService
+public class DoctorProfileService : IDoctorProfileService
 {
-    private readonly IDoctorProfileRepository _doctorProfileRepository = doctorProfileRepository;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public DoctorProfileService(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
 
     public async Task<DoctorProfileDto?> GetDoctorProfileAsync(int userId)
     {
-        var profile = await _doctorProfileRepository.GetByUserIdAsync(userId);
+        var profile = await _unitOfWork.DoctorProfiles.GetByUserIdAsync(userId);
         return profile == null ? null : MapToDto(profile);
     }
 
     public async Task<DoctorProfileDto?> UpdateDoctorProfileAsync(int userId, UpdateDoctorProfileDto dto)
     {
-        var profile = await _doctorProfileRepository.GetByUserIdAsync(userId);
+        var profile = await _unitOfWork.DoctorProfiles.GetByUserIdAsync(userId);
         if (profile == null)
             return null;
 
@@ -26,9 +31,10 @@ public class DoctorProfileService(IDoctorProfileRepository doctorProfileReposito
         profile.Phone = dto.Phone ?? profile.Phone;
         profile.Specialization = dto.Specialization ?? profile.Specialization;
         profile.YearsExperience = dto.YearsExperience ?? profile.YearsExperience;
- 
-        var updatedProfile = await _doctorProfileRepository.UpdateAsync(profile);
-        return MapToDto(updatedProfile);
+
+        await _unitOfWork.DoctorProfiles.UpdateAsync(profile);
+        await _unitOfWork.SaveChangesAsync();
+        return MapToDto(profile);
     }
 
     private static DoctorProfileDto MapToDto(DoctorProfile profile) => new()

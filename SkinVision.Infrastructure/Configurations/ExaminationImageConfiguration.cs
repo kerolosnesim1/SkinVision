@@ -18,7 +18,7 @@ public class ExaminationImageConfiguration : IEntityTypeConfiguration<Examinatio
             .HasMaxLength(10);
 
         builder.Property(i => i.UploadDate)
-            .HasDefaultValueSql("GETDATE()");
+            .HasDefaultValueSql("GETUTCDATE()");
 
         builder.Property(i => i.BodyPart)
             .HasMaxLength(100);

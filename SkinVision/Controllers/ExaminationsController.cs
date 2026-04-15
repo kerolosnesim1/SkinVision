@@ -5,7 +5,7 @@ using SkinVision.Application.Services;
 
 namespace SkinVision.Controllers;
 
-[Authorize(Roles = "doctor")]
+[Authorize(Roles = nameof(Domain.Enums.UserRole.Doctor))]
 public class ExaminationsController : BaseApiController
 {
     private readonly IExaminationService _examinationService;
@@ -65,7 +65,13 @@ public class ExaminationsController : BaseApiController
         if (file == null || file.Length == 0)
             return BadRequest("No file uploaded.");
 
-        var result = await _imageService.AddImageAsync(doctorId.Value, id, file.OpenReadStream(), file.FileName, bodyPart);
+        var result = await _imageService.AddImageAsync(
+            doctorId.Value,
+            id,
+            file.OpenReadStream(),
+            file.FileName,
+            bodyPart,
+            file.Length);
         if (result == null)
             return NotFound();
 

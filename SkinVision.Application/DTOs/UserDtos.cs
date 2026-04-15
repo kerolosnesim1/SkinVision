@@ -1,4 +1,5 @@
 using System;
+using SkinVision.Domain.Enums;
 
 namespace SkinVision.Application.DTOs;
 
@@ -7,7 +8,7 @@ public class UserDto
     public int UserId { get; set; }
     public string Username { get; set; } = null!;
     public string Email { get; set; } = null!;
-    public string? Role { get; set; }
+    public UserRole? Role { get; set; }
     public DoctorProfileDto? DoctorProfile { get; set; }
 }
 
