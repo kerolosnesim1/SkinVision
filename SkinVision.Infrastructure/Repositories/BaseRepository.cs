@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SkinVision.Application.Interfaces;
+using SkinVision.Application.Interfaces.Repositories;
 using SkinVision.Infrastructure.Context;
 
 namespace SkinVision.Infrastructure.Repositories;

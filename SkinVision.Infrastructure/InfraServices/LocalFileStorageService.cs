@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using SkinVision.Application.Services;
+using Microsoft.AspNetCore.Hosting;
+using SkinVision.Application.Interfaces.Services;
 
 namespace SkinVision.Infrastructure.InfraServices;
 
@@ -56,7 +56,8 @@ public class LocalFileStorageService : IFileStorageService
 
     public async Task<string> SaveFileAsync(Stream fileStream, string fileName, string contentType)
     {
-        var basePath = Path.Combine(GetWebRootPath(), "uploads", "images");
+        var subFolder = contentType == "application/pdf" ? "reports" : "images";
+        var basePath = Path.Combine(GetWebRootPath(), "uploads", subFolder);
         Directory.CreateDirectory(basePath);
 
         var fileNameGenerated = Guid.NewGuid() + Path.GetExtension(fileName);
@@ -67,6 +68,6 @@ public class LocalFileStorageService : IFileStorageService
             await fileStream.CopyToAsync(fileStreamOutput);
         }
 
-        return $"uploads/images/{fileNameGenerated}";
+        return $"uploads/{subFolder}/{fileNameGenerated}";
     }
 }

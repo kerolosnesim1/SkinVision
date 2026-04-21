@@ -9,9 +9,11 @@ export interface User {
 
 export interface DoctorProfile {
     doctorId: number;
+    fullName?: string;
     specialization?: string;
     yearsExperience?: number;
-    hospitalAffiliation?: string;
+    clinicName?: string;
+    clinicAddress?: string;
 }
 
 export interface LoginRequest {
@@ -93,4 +95,14 @@ export interface Prediction {
     modelVersion?: string;
     createdAt?: Date;
     findings: string[];
+}
+
+// Report models
+export interface Report {
+    reportId: number;
+    diagnosisId: number;
+    title?: string;
+    reportPath?: string;
+    format?: string;
+    createdAt?: Date;
 }

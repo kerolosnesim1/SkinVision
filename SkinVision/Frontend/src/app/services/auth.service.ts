@@ -28,8 +28,29 @@ export class AuthService {
         );
     }
 
-    register(data: any): Observable<any> {
-        return this.http.post(`${this.apiUrl}/register`, data);
+    register(data: {
+        fullName: string;
+        email: string;
+        phone: string;
+        password: string;
+        clinicName: string;
+        clinicAddress: string;
+    }): Observable<LoginResponse> {
+        const body = {
+            fullName: data.fullName,
+            email: data.email,
+            password: data.password,
+            phone: data.phone,
+            clinicName: data.clinicName,
+            clinicAddress: data.clinicAddress
+        };
+        return this.http.post<LoginResponse>(`${this.apiUrl}/register`, body).pipe(
+            tap((response) => {
+                localStorage.setItem('token', response.token);
+                localStorage.setItem('currentUser', JSON.stringify(response.user));
+                this.currentUserSubject.next(response.user);
+            })
+        );
     }
 
     logout(): void {

@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-register',
@@ -199,7 +201,10 @@ export class RegisterComponent {
     clinicAddress: ''
   };
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private auth: AuthService
+  ) {}
 
   isValid(): boolean {
     return this.form.fullName.trim() !== '' &&
@@ -217,14 +222,25 @@ export class RegisterComponent {
       return;
     }
 
-    // Mock registration
-    localStorage.setItem('currentUser', JSON.stringify({
-      email: this.form.email,
-      fullName: this.form.fullName,
-      clinicName: this.form.clinicName
-    }));
-
-    alert('Account created successfully!');
-    this.router.navigate(['/doctor']);
+    this.auth.register(this.form).subscribe({
+      next: () => {
+        alert('Account created successfully!');
+        this.router.navigate(['/doctor']);
+      },
+      error: (err: unknown) => {
+        let message = 'Could not create account.';
+        if (err instanceof HttpErrorResponse) {
+          if (err.status === 0) {
+            message =
+              'Cannot reach the API.';
+          } else if (typeof err.error === 'object' && err.error && 'message' in err.error) {
+            message = String((err.error as { message: string }).message);
+          } else if (err.message) {
+            message = err.message;
+          }
+        }
+        alert(message);
+      }
+    });
   }
 }

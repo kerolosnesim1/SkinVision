@@ -1,4 +1,4 @@
-﻿namespace SkinVision.Application.Interfaces;
+namespace SkinVision.Application.Interfaces.Repositories;
 
 public interface IBaseRepository<T> where T : class
 {

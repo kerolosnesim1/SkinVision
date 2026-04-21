@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using SkinVision.Application.DTOs;
-using SkinVision.Application.Interfaces;
+using SkinVision.Application.Interfaces.Repositories;
+using SkinVision.Application.Interfaces.Services;
 using SkinVision.Domain.Entities;
 using SkinVision.Domain.Enums;
 using System.IdentityModel.Tokens.Jwt;

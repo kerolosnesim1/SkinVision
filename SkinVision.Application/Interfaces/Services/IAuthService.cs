@@ -1,6 +1,6 @@
 using SkinVision.Application.DTOs;
 
-namespace SkinVision.Application.Services;
+namespace SkinVision.Application.Interfaces.Services;
 
 public interface IAuthService
 {

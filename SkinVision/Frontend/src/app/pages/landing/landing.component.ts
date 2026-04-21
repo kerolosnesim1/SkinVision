@@ -403,7 +403,7 @@ import { CommonModule } from '@angular/common';
       --primary-dark: #126364;
       --secondary-color: #2BB1B8;
       --accent-color: #E8F5F6;
-      --text-dark: #1F2937;c
+      --text-dark: #1F2937;
       --text-light: #6B7280;
       --white: #FFFFFF;
       --glass-bg: rgba(255, 255, 255, 0.9);

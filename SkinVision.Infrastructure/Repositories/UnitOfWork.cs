@@ -1,4 +1,4 @@
-﻿using SkinVision.Application.Interfaces;
+using SkinVision.Application.Interfaces.Repositories;
 using SkinVision.Infrastructure.Context;
 
 namespace SkinVision.Infrastructure.Repositories;
@@ -11,6 +11,7 @@ public class UnitOfWork : IUnitOfWork
     private IUserRepository? _users;
     private IImageRepository? _images;
     private IDoctorProfileRepository? _doctorProfiles;
+    private IReportRepository? _reports;
 
     public UnitOfWork(AppDbContext context)
     {
@@ -28,6 +29,9 @@ public class UnitOfWork : IUnitOfWork
 
     public IDoctorProfileRepository DoctorProfiles =>
         _doctorProfiles ??= new DoctorProfileRepository(_context);
+
+    public IReportRepository Reports =>
+        _reports ??= new ReportRepository(_context);
 
     public async Task<int> SaveChangesAsync()
     {

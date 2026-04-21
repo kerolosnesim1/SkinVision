@@ -10,6 +10,7 @@ public class Report
 
     public string? ReportPath { get; set; }
     public string? Format { get; set; }
+    public string? Title { get; set; }
     public DateTime? CreatedAt { get; set; }
 
     public virtual Examination Examination { get; set; } = null!;

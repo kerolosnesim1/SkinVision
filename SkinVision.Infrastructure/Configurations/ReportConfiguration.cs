@@ -16,6 +16,9 @@ public class ReportConfiguration : IEntityTypeConfiguration<Report>
         builder.Property(r => r.Format)
             .HasMaxLength(50);
 
+        builder.Property(r => r.Title)
+            .HasMaxLength(200);
+
         builder.Property(r => r.CreatedAt)
             .HasDefaultValueSql("GETUTCDATE()");
 

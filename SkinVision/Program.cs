@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using SkinVision.Application.Interfaces;
+using SkinVision.Application.Interfaces.Repositories;
+using SkinVision.Application.Interfaces.Services;
 using SkinVision.Application.Services;
 using SkinVision.Extensions;
 using SkinVision.Infrastructure.Context;
@@ -42,6 +43,8 @@ builder.Services.AddScoped<IExaminationService, ExaminationService>();
 builder.Services.AddScoped<IDoctorProfileService, DoctorProfileService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IReportGeneratorService, PdfReportGeneratorService>();
 
 // Configure CORS for Angular frontend
 builder.Services.AddCors(options =>

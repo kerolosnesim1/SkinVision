@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -209,7 +210,11 @@ export class LoginComponent {
   rememberMe = false;
   errorMessage = '';
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private auth: AuthService
+
+  ) {}
 
   onSubmit() {
     if (!this.email || !this.password) {
@@ -217,23 +222,21 @@ export class LoginComponent {
       return;
     }
 
-    // Mock login
-    localStorage.setItem('currentUser', JSON.stringify({
-      email: this.email,
-      fullName: 'Dr. Ahmed Hassan',
-      clinicName: 'SkinCare Clinic'
-    }));
+  
+    this.auth.login(this.email, this.password).subscribe({
+      next: (user) => {
+        localStorage.setItem('currentUser', JSON.stringify(user));
 
-    this.router.navigate(['/doctor']);
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Login failed. Please try again.';
+      }
+    });
   }
+} 
+    
 
-  demoLogin() {
-    localStorage.setItem('currentUser', JSON.stringify({
-      email: 'demo@skinvision.com',
-      fullName: 'Dr. Ahmed Hassan',
-      clinicName: 'SkinCare Clinic'
-    }));
+  
+  
 
-    this.router.navigate(['/doctor']);
-  }
-}

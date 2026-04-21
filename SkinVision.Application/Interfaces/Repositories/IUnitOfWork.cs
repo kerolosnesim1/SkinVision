@@ -1,4 +1,4 @@
-namespace SkinVision.Application.Interfaces;
+namespace SkinVision.Application.Interfaces.Repositories;
 
 public interface IUnitOfWork : IDisposable
 {
@@ -6,6 +6,7 @@ public interface IUnitOfWork : IDisposable
     IUserRepository Users { get; }
     IImageRepository Images { get; }
     IDoctorProfileRepository DoctorProfiles { get; }
+    IReportRepository Reports { get; }
 
     Task<int> SaveChangesAsync();
 }

@@ -1,6 +1,6 @@
 using SkinVision.Domain.Entities;
 
-namespace SkinVision.Application.Interfaces;
+namespace SkinVision.Application.Interfaces.Repositories;
 
 public interface IExaminationRepository : IBaseRepository<Examination>
 {

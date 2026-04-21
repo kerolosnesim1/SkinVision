@@ -1,6 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { ExaminationService } from '../../services/examination.service';
+import { ReportService } from '../../services/report.service';
+import { Examination, Report, DoctorProfile } from '../../models/models';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-view-examination',
@@ -11,20 +15,40 @@ import { CommonModule } from '@angular/common';
       <div class="page-header">
         <a routerLink="/doctor/examinations" class="back-link">← Back to History</a>
         <div class="header-actions">
-          <button class="btn btn-primary" (click)="downloadPDF()">📄 Download PDF</button>
+          <button
+            class="btn btn-primary"
+            (click)="generateAndDownloadPDF()"
+            [disabled]="isGenerating"
+            id="download-report-btn">
+            <span *ngIf="!isGenerating">📄 Download PDF</span>
+            <span *ngIf="isGenerating">⏳ Generating...</span>
+          </button>
         </div>
       </div>
 
-      <div class="report-card">
+      <!-- Loading State -->
+      <div class="loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Loading examination...</p>
+      </div>
+
+      <!-- Error State -->
+      <div class="error-state" *ngIf="errorMessage">
+        <p>{{ errorMessage }}</p>
+        <a routerLink="/doctor/examinations" class="btn btn-primary">Back to Examinations</a>
+      </div>
+
+      <!-- Report Card -->
+      <div class="report-card" *ngIf="exam && !isLoading">
         <div class="report-header">
           <div class="clinic-info">
-            <h1>SkinCare Clinic</h1>
-            <p>Dr. Ahmed Hassan</p>
-            <p>123 Medical Center, Cairo</p>
+           <h1>{{ exam.doctor?.clinicName || 'SkinVision Clinic' }}</h1>
+            <p>{{ exam.doctor?.fullName || 'Doctor' }}</p>
+            <p>{{ exam.doctor?.clinicAddress || '' }}</p>
           </div>
           <div class="report-meta">
             <p><strong>Examination ID:</strong> #{{ examId }}</p>
-            <p><strong>Date:</strong> {{ exam.date }}</p>
+            <p><strong>Date:</strong> {{ exam.createdAt | date:'MMMM dd, yyyy - hh:mm a' }}</p>
           </div>
         </div>
 
@@ -37,7 +61,7 @@ import { CommonModule } from '@angular/common';
             </div>
             <div class="info-item">
               <label>Phone</label>
-              <p>{{ exam.patientPhone }}</p>
+              <p>{{ exam.patientPhone || 'N/A' }}</p>
             </div>
             <div class="info-item">
               <label>Age</label>
@@ -50,13 +74,16 @@ import { CommonModule } from '@angular/common';
           </div>
         </div>
 
-        <div class="section">
+        <div class="section" *ngIf="exam.images && exam.images.length > 0">
           <h2>Dermascope Images</h2>
           <div class="images-grid">
             <div *ngFor="let img of exam.images" class="image-item">
-              <img [src]="img.url" alt="Dermascope image">
+              <img [src]="getImageUrl(img.filePath)" alt="Dermascope image">
+              <div class="image-meta" *ngIf="img.bodyPart">
+                {{ img.bodyPart }}
+              </div>
               <div class="image-ai" *ngIf="img.aiResult">
-                AI: {{ img.aiResult }}
+                AI: {{ img.aiResult.classification }}
               </div>
             </div>
           </div>
@@ -69,32 +96,62 @@ import { CommonModule } from '@angular/common';
               <label>Classification</label>
               <h3>{{ exam.aiAnalysis.classification }}</h3>
             </div>
+            <div class="ai-confidence" *ngIf="exam.aiAnalysis.confidenceScore">
+              <label>Confidence</label>
+              <h3>{{ (exam.aiAnalysis.confidenceScore * 100).toFixed(1) }}%</h3>
+            </div>
+          </div>
+          <div class="ai-findings" *ngIf="exam.aiAnalysis.findings && exam.aiAnalysis.findings.length > 0">
+            <label>Findings</label>
+            <ul>
+              <li *ngFor="let finding of exam.aiAnalysis.findings">{{ finding }}</li>
+            </ul>
           </div>
         </div>
 
         <div class="section diagnosis-section">
           <h2>Diagnosis & Treatment</h2>
           <div class="diagnosis-content">
-            <div class="diagnosis-item">
+            <div class="diagnosis-item" *ngIf="exam.diagnosis">
               <label>Diagnosis</label>
               <p>{{ exam.diagnosis }}</p>
             </div>
-            <div class="diagnosis-item">
+            <div class="diagnosis-item" *ngIf="exam.treatment">
               <label>Treatment Plan</label>
               <p>{{ exam.treatment }}</p>
             </div>
-            <div class="diagnosis-item">
+            <div class="diagnosis-item" *ngIf="exam.followUp">
               <label>Follow-up Instructions</label>
               <p>{{ exam.followUp }}</p>
             </div>
             <div class="diagnosis-row">
-              <div class="diagnosis-item">
+              <div class="diagnosis-item" *ngIf="exam.riskLevel">
                 <label>Risk Level</label>
                 <span class="risk-badge" [class]="exam.riskLevel.toLowerCase()">{{ exam.riskLevel }}</span>
               </div>
               <div class="diagnosis-item" *ngIf="exam.followUpDate">
                 <label>Follow-up Date</label>
-                <p>{{ exam.followUpDate }}</p>
+                <p>{{ exam.followUpDate | date:'MMMM dd, yyyy' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Previous Reports Section -->
+        <div class="section reports-section" *ngIf="reports.length > 0">
+          <h2>Generated Reports</h2>
+          <div class="reports-list">
+            <div class="report-item" *ngFor="let report of reports">
+              <div class="report-info">
+                <span class="report-icon">📄</span>
+                <div>
+                  <p class="report-title">{{ report.title }}</p>
+                  <p class="report-date">{{ report.createdAt | date:'MMM dd, yyyy - hh:mm a' }}</p>
+                </div>
+              </div>
+              <div class="report-actions">
+                <button class="btn-icon" (click)="downloadExistingReport(report)" title="Download">⬇️</button>
+                <button class="btn-icon btn-icon-danger" (click)="deleteReport(report)" title="Delete">🗑️</button>
               </div>
             </div>
           </div>
@@ -104,6 +161,11 @@ import { CommonModule } from '@angular/common';
           <p>This report was generated using SkinVision AI-Powered Dermatology Platform</p>
           <p class="disclaimer">AI analysis is advisory only. Clinical diagnosis by licensed physician.</p>
         </div>
+      </div>
+
+      <!-- Success Toast -->
+      <div class="toast" *ngIf="toastMessage" [class.show]="toastMessage">
+        {{ toastMessage }}
       </div>
     </div>
   `,
@@ -125,6 +187,11 @@ import { CommonModule } from '@angular/common';
       color: var(--text-light);
       text-decoration: none;
       font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: var(--primary-color);
     }
 
     .header-actions {
@@ -132,6 +199,33 @@ import { CommonModule } from '@angular/common';
       gap: 10px;
     }
 
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    /* Loading & Error */
+    .loading-state, .error-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-light);
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--primary-color);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Report Card */
     .report-card {
       background: var(--white);
       border-radius: 12px;
@@ -221,6 +315,13 @@ import { CommonModule } from '@angular/common';
       object-fit: cover;
     }
 
+    .image-meta {
+      padding: 6px 8px;
+      font-size: 11px;
+      color: var(--text-light);
+      text-align: center;
+    }
+
     .image-ai {
       padding: 8px;
       background: var(--primary-color);
@@ -229,10 +330,34 @@ import { CommonModule } from '@angular/common';
       text-align: center;
     }
 
-    .ai-classification h3 {
+    .ai-result {
+      display: flex;
+      gap: 40px;
+    }
+
+    .ai-classification h3, .ai-confidence h3 {
       margin: 5px 0 0 0;
       color: var(--primary-color);
       font-size: 20px;
+    }
+
+    .ai-findings {
+      margin-top: 16px;
+    }
+
+    .ai-findings label {
+      font-size: 12px;
+      color: var(--text-light);
+    }
+
+    .ai-findings ul {
+      margin: 8px 0 0 0;
+      padding-left: 20px;
+    }
+
+    .ai-findings li {
+      margin-bottom: 4px;
+      color: var(--text-dark);
     }
 
     .diagnosis-content {
@@ -252,6 +377,7 @@ import { CommonModule } from '@angular/common';
       margin: 0;
       color: var(--text-dark);
       line-height: 1.6;
+      white-space: pre-line;
     }
 
     .diagnosis-row {
@@ -271,6 +397,74 @@ import { CommonModule } from '@angular/common';
     .risk-badge.medium { background: #fff3cd; color: #856404; }
     .risk-badge.high { background: #f8d7da; color: #721c24; }
 
+    /* Reports List */
+    .reports-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .report-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--background-color);
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .report-item:hover {
+      background: #e8f5e9;
+    }
+
+    .report-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .report-icon {
+      font-size: 24px;
+    }
+
+    .report-title {
+      margin: 0;
+      font-weight: 500;
+      color: var(--text-dark);
+      font-size: 14px;
+    }
+
+    .report-date {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--text-light);
+    }
+
+    .report-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .btn-icon:hover {
+      background: rgba(0,0,0,0.08);
+    }
+
+    .btn-icon-danger:hover {
+      background: #f8d7da;
+    }
+
+    /* Footer */
     .report-footer {
       padding: 20px 30px;
       background: var(--background-color);
@@ -287,6 +481,28 @@ import { CommonModule } from '@angular/common';
       font-style: italic;
     }
 
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: var(--primary-color);
+      color: white;
+      padding: 14px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     @media (max-width: 768px) {
       .info-grid {
         grid-template-columns: 1fr;
@@ -300,39 +516,134 @@ import { CommonModule } from '@angular/common';
         flex-direction: column;
         gap: 20px;
       }
+
+      .report-header {
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .report-meta {
+        text-align: left;
+      }
     }
   `]
 })
 export class ViewExaminationComponent implements OnInit {
   examId: string = '';
+  exam: Examination | null = null;
+  doctorProfile: DoctorProfile | null = null;
+  reports: Report[] = [];
+  isLoading = true;
+  isGenerating = false;
+  errorMessage = '';
+  toastMessage = '';
 
-  exam = {
-    date: 'January 26, 2026 - 10:30 AM',
-    patientName: 'Mohamed Ali',
-    patientPhone: '0101234567',
-    patientAge: 35,
-    reason: 'Skin rash on right arm',
-    images: [
-      { url: 'https://via.placeholder.com/300x200?text=Dermascope+1', aiResult: 'Contact Dermatitis' },
-      { url: 'https://via.placeholder.com/300x200?text=Dermascope+2', aiResult: null }
-    ],
-    aiAnalysis: {
-      classification: 'Contact Dermatitis'
-    },
-    diagnosis: 'Contact Dermatitis - likely caused by exposure to irritant substance. Mild inflammation observed with no signs of infection.',
-    treatment: '1. Apply hydrocortisone cream 1% twice daily for 7 days\n2. Avoid contact with suspected irritants\n3. Use fragrance-free moisturizer',
-    followUp: 'Return if symptoms worsen or do not improve within 2 weeks. Discontinue cream use after 7 days.',
-    riskLevel: 'Low',
-    followUpDate: 'February 9, 2026'
-  };
-
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private examinationService: ExaminationService,
+    private reportService: ReportService
+  ) {}
 
   ngOnInit() {
     this.examId = this.route.snapshot.params['id'];
+    this.loadExamination();
+    this.loadReports();
   }
 
-  downloadPDF() {
-    alert('Downloading PDF report...');
+  loadExamination() {
+    this.isLoading = true;
+    this.examinationService.getExamination(+this.examId).subscribe({
+      next: (exam) => {
+        this.exam = exam;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.errorMessage = 'Failed to load examination.';
+        this.isLoading = false;
+        console.error(err);
+      }
+    });
+  }
+
+  loadReports() {
+    this.reportService.getReportsForExamination(+this.examId).subscribe({
+      next: (reports) => this.reports = reports,
+      error: (err) => console.error('Failed to load reports', err)
+    });
+  }
+
+  generateAndDownloadPDF() {
+    this.isGenerating = true;
+    this.reportService.generateReport(+this.examId).subscribe({
+      next: (report) => {
+        this.reports.unshift(report);
+        this.showToast('Report generated successfully!');
+
+        // Immediately download the generated report
+        this.reportService.downloadReport(report.reportId).subscribe({
+          next: (blob) => {
+            this.triggerDownload(blob, `${report.title || 'Report'}.pdf`);
+            this.isGenerating = false;
+          },
+          error: () => {
+            this.showToast('Report created but download failed. Try from the list below.');
+            this.isGenerating = false;
+          }
+        });
+      },
+      error: (err) => {
+        this.showToast('Failed to generate report. Please try again.');
+        this.isGenerating = false;
+        console.error(err);
+      }
+    });
+  }
+
+  downloadExistingReport(report: Report) {
+    this.reportService.downloadReport(report.reportId).subscribe({
+      next: (blob) => {
+        this.triggerDownload(blob, `${report.title || 'Report'}.pdf`);
+      },
+      error: () => {
+        this.showToast('Download failed. Please try again.');
+      }
+    });
+  }
+
+  deleteReport(report: Report) {
+    if (!confirm('Are you sure you want to delete this report?')) return;
+
+    this.reportService.deleteReport(report.reportId).subscribe({
+      next: () => {
+        this.reports = this.reports.filter(r => r.reportId !== report.reportId);
+        this.showToast('Report deleted.');
+      },
+      error: () => {
+        this.showToast('Failed to delete report.');
+      }
+    });
+  }
+
+  getImageUrl(filePath?: string): string {
+    if (!filePath) return '';
+    // The API serves static files from wwwroot
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    return `${baseUrl}/${filePath}`;
+  }
+
+  private triggerDownload(blob: Blob, fileName: string) {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  private showToast(message: string) {
+    this.toastMessage = message;
+    setTimeout(() => {
+      this.toastMessage = '';
+    }, 3000);
   }
 }

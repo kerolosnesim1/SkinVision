@@ -1,5 +1,6 @@
 using SkinVision.Application.DTOs;
-using SkinVision.Application.Interfaces;
+using SkinVision.Application.Interfaces.Repositories;
+using SkinVision.Application.Interfaces.Services;
 using SkinVision.Domain.Entities;
 
 namespace SkinVision.Application.Services;

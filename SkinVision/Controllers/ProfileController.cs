@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkinVision.Application.DTOs;
-using SkinVision.Application.Services;
+using SkinVision.Application.Interfaces.Services;
 
 namespace SkinVision.Controllers;
 
