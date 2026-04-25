@@ -28,3 +28,14 @@ public class RegisterResponseDto
     public string Token { get; set; } = null!;
     public UserDto User { get; set; } = null!;
 }
+
+public class ForgotPasswordRequestDto
+{
+    public string Email { get; set; } = null!;
+}
+
+public class ResetPasswordWithTokenDto
+{
+    public string Token { get; set; } = null!;
+    public string NewPassword { get; set; } = null!;
+}

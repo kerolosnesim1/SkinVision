@@ -42,4 +42,9 @@ public class UnitOfWork : IUnitOfWork
     {
         _context.Dispose();
     }
+
+    public IBaseRepository<T> BaseRepository<T>() where T : class
+    {
+        throw new NotImplementedException();
+    }
 }

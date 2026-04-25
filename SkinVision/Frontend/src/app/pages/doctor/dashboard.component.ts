@@ -1,6 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { ExaminationService } from '../../services/examination.service';
+import { AuthService } from '../../services/auth.service';
+import { Examination, ExaminationStats, ExaminationListItem } from '../../models/models';
 
 @Component({
   selector: 'app-doctor-dashboard',
@@ -49,27 +52,33 @@ import { CommonModule } from '@angular/common';
         </div>
 
         <div class="examinations-list">
-          <div *ngFor="let exam of recentExaminations" class="exam-card">
-            <div class="exam-info">
-              <h4>{{ exam.patientName }}</h4>
-              <p class="reason">{{ exam.reason }}</p>
-              <p class="date">{{ exam.date }}</p>
+          <div *ngIf="isLoading" class="empty-state">
+            <p>Loading examinations...</p>
+          </div>
+          
+          <div *ngIf="!isLoading">
+            <div *ngFor="let exam of recentExaminations" class="exam-card">
+              <div class="exam-info">
+                <h4>{{ exam.patientName }}</h4>
+                <p class="reason">{{ exam.reason }}</p>
+                <p class="date">{{ exam.createdAt | date:'mediumDate' }}</p>
+              </div>
+              <div class="exam-meta">
+                <span class="risk-badge" [class]="exam.riskLevel?.toLowerCase() || 'low'">
+                  {{ exam.riskLevel || 'Low' }}
+                </span>
+                <a [routerLink]="['/doctor/examination', exam.diagnosisId]" class="btn btn-secondary btn-sm">
+                  View
+                </a>
+              </div>
             </div>
-            <div class="exam-meta">
-              <span class="risk-badge" [class]="exam.riskLevel.toLowerCase()">
-                {{ exam.riskLevel }}
-              </span>
-              <a [routerLink]="['/doctor/examination', exam.id]" class="btn btn-secondary btn-sm">
-                View
+
+            <div *ngIf="recentExaminations.length === 0" class="empty-state">
+              <p>No examinations yet</p>
+              <a routerLink="/doctor/examination/new" class="btn btn-primary">
+                Start Your First Examination
               </a>
             </div>
-          </div>
-
-          <div *ngIf="recentExaminations.length === 0" class="empty-state">
-            <p>No examinations yet</p>
-            <a routerLink="/doctor/examination/new" class="btn btn-primary">
-              Start Your First Examination
-            </a>
           </div>
         </div>
       </div>
@@ -262,20 +271,57 @@ import { CommonModule } from '@angular/common';
     }
   `]
 })
-export class DoctorDashboardComponent {
-  doctorName = 'Ahmed Hassan';
-  clinicName = 'SkinCare Clinic, Cairo';
+export class DoctorDashboardComponent implements OnInit {
+  doctorName: string = '';
+  clinicName: string = '';
+  stats: ExaminationStats = { total: 0, today: 0, aiAnalyses: 0 };
+  recentExaminations: ExaminationListItem[] = [];
+  isLoading: boolean = true;
 
-  stats = {
-    total: 47,
-    today: 5,
-    aiAnalyses: 42
-  };
+  constructor(
+    private examinationService: ExaminationService,
+    private authService: AuthService
+  ) { }
 
-  recentExaminations = [
-    { id: '1', patientName: 'Mohamed Ali', reason: 'Skin rash on arm', date: 'Today, 10:30 AM', riskLevel: 'Low' },
-    { id: '2', patientName: 'Fatma Hassan', reason: 'Mole examination', date: 'Today, 09:15 AM', riskLevel: 'Medium' },
-    { id: '3', patientName: 'Ahmed Mahmoud', reason: 'Acne treatment follow-up', date: 'Yesterday', riskLevel: 'Low' },
-    { id: '4', patientName: 'Sara Ibrahim', reason: 'Suspicious lesion', date: 'Yesterday', riskLevel: 'High' }
-  ];
+  ngOnInit() {
+    this.loadUserData();
+    this.getStats();
+    this.getRecentExaminations();
+  }
+
+  private loadUserData(): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser?.doctorProfile) {
+      this.doctorName = currentUser.doctorProfile.fullName || 'Doctor';
+      this.clinicName = currentUser.doctorProfile.clinicName || 'Clinic';
+    } else {
+      this.doctorName = 'Doctor';
+      this.clinicName = 'Clinic';
+    }
+  }
+
+  private getStats(): void {
+    this.examinationService.getStats().subscribe({
+      next: (stats) => {
+        this.stats = stats;
+      },
+      error: (error) => {
+        console.error('Failed to load stats:', error);
+      }
+    });
+  }
+
+  private getRecentExaminations(): void {
+    this.examinationService.getExaminations().subscribe({
+      next: (examinations) => {
+        // Take only the first 5 examinations for recent list
+        this.recentExaminations = examinations.slice(0, 5);
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Failed to load examinations:', error);
+        this.isLoading = false;
+      }
+    });
+  }
 }

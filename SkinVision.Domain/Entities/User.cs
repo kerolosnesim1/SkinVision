@@ -14,6 +14,10 @@ public partial class User
 
     public string PasswordHash { get; set; } = null!;
 
+    public string? PasswordResetToken { get; set; }
+
+    public DateTime? PasswordResetTokenExpires { get; set; }
+
     public UserRole? Role { get; set; }
 
     public DateTime? CreatedAt { get; set; }

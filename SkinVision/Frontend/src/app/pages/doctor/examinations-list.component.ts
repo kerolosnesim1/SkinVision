@@ -1,8 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { ExaminationService } from '../../services/examination.service';
+import { ExaminationListItem } from '../../models/models';
+import { ReportService } from '../../services/report.service';
 @Component({
   selector: 'app-examinations-list',
   standalone: true,
@@ -51,7 +55,7 @@ import { FormsModule } from '@angular/forms';
           </thead>
           <tbody>
             <tr *ngFor="let exam of filteredExaminations">
-              <td class="date-cell">{{ exam.date }}</td>
+              <td class="date-cell">{{ exam.createdAt }}</td>
               <td>
                 <strong>{{ exam.patientName }}</strong>
                 <span class="phone">{{ exam.patientPhone }}</span>
@@ -59,12 +63,12 @@ import { FormsModule } from '@angular/forms';
               <td>{{ exam.reason }}</td>
               <td class="diagnosis-cell">{{ exam.diagnosis }}</td>
               <td>
-                <span class="risk-badge" [class]="exam.riskLevel.toLowerCase()">
+                <span class="risk-badge" [class]="exam.riskLevel?.toLowerCase()">
                   {{ exam.riskLevel }}
                 </span>
               </td>
               <td class="actions-cell">
-                <a [routerLink]="['/doctor/examination', exam.id]" class="btn btn-secondary btn-sm">View</a>
+                <a [routerLink]="['/doctor/examination', exam.diagnosisId]" class="btn btn-secondary btn-sm">View</a>
                 <button class="btn btn-secondary btn-sm" (click)="downloadReport(exam)">PDF</button>
               </td>
             </tr>
@@ -225,30 +229,83 @@ import { FormsModule } from '@angular/forms';
     }
   `]
 })
-export class ExaminationsListComponent {
+export class ExaminationsListComponent implements OnInit, OnDestroy {
   searchQuery = '';
   filterRisk = '';
   filterDate = '';
+  filteredExaminations: ExaminationListItem[] = [];
 
-  examinations = [
-    { id: '1', date: 'Jan 26, 2026', patientName: 'Mohamed Ali', patientPhone: '0101234567', reason: 'Skin rash', diagnosis: 'Contact Dermatitis', riskLevel: 'Low' },
-    { id: '2', date: 'Jan 26, 2026', patientName: 'Fatma Hassan', patientPhone: '0109876543', reason: 'Mole check', diagnosis: 'Melanocytic Nevus', riskLevel: 'Medium' },
-    { id: '3', date: 'Jan 25, 2026', patientName: 'Ahmed Mahmoud', patientPhone: '0115554433', reason: 'Acne', diagnosis: 'Acne Vulgaris', riskLevel: 'Low' },
-    { id: '4', date: 'Jan 25, 2026', patientName: 'Sara Ibrahim', patientPhone: '0122334455', reason: 'Suspicious lesion', diagnosis: 'Basal Cell Carcinoma - Suspected', riskLevel: 'High' },
-    { id: '5', date: 'Jan 24, 2026', patientName: 'Khaled Omar', patientPhone: '0108765432', reason: 'Eczema follow-up', diagnosis: 'Eczema - Improving', riskLevel: 'Low' }
-  ];
+  /** Subject that emits every time a filter changes; debounced to avoid API spam */
+  private filterSubject = new Subject<void>();
 
-  filteredExaminations = [...this.examinations];
+  constructor(
+    private examinationService: ExaminationService,
+    private reportService: ReportService
+  ) { }
 
-  applyFilters() {
-    this.filteredExaminations = this.examinations.filter(exam => {
-      const matchesSearch = exam.patientName.toLowerCase().includes(this.searchQuery.toLowerCase());
-      const matchesRisk = !this.filterRisk || exam.riskLevel === this.filterRisk;
-      return matchesSearch && matchesRisk;
-    });
+  /**
+   * On init: load the initial list AND set up the debounced filter pipeline.
+   * debounceTime(300)  – waits 300 ms of silence before firing the API call.
+   * distinctUntilChanged() – skips duplicate consecutive emissions (optional but nice).
+   */
+  ngOnInit(): void {
+    this.filterSubject
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => this.loadExaminations());
+
+    this.loadExaminations();
   }
 
-  downloadReport(exam: any) {
-    alert(`Downloading PDF report for ${exam.patientName}...`);
+  /** Clean up the Subject to avoid memory leaks */
+  ngOnDestroy(): void {
+    this.filterSubject.complete();
+  }
+
+  /* The server handles all filtering */
+  loadExaminations(): void {
+    this.examinationService
+      .getExaminations(this.searchQuery, this.filterRisk, this.filterDate)
+      .subscribe({
+        next: (list) => {
+          this.filteredExaminations = list;
+        },
+        error: (error) => {
+          console.error('Failed to load examinations:', error);
+        }
+      });
+  }
+
+  /**
+   * Pushes a value onto the filter Subject instead of calling the API directly.
+   * The Subject's debounce pipeline will fire loadExaminations() after 300 ms of inactivity.
+   */
+  applyFilters(): void {
+    this.filterSubject.next();
+  }
+
+  /**
+   * Generates a report for the examination, then immediately downloads the PDF.
+   *
+   * switchMap: pipes the generateReport result into downloadReport automatically,
+   * flattening the nested Observable into a single subscription chain.
+   * If generateReport emits a new value before downloadReport finishes,
+   * switchMap cancels the previous inner Observable (prevents race conditions).
+   */
+  downloadReport(exam: ExaminationListItem): void {
+    this.reportService.generateReport(exam.diagnosisId)
+      .pipe(switchMap(report => this.reportService.downloadReport(report.reportId)))
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `report-${exam.diagnosisId}.pdf`;
+          a.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: (error) => {
+          console.error('Failed to download report:', error);
+        }
+      });
   }
 }

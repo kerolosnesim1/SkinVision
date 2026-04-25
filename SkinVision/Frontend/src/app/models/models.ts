@@ -14,6 +14,7 @@ export interface DoctorProfile {
     yearsExperience?: number;
     clinicName?: string;
     clinicAddress?: string;
+    phone?: string;
 }
 
 export interface LoginRequest {

@@ -17,4 +17,10 @@ public class UserRepository : BaseRepository<User>, IUserRepository
             .Include(u => u.DoctorProfile)
             .FirstOrDefaultAsync(u => u.Email == email);
     }
+
+    public async Task<User?> FindByPasswordResetTokenAsync(string token)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.PasswordResetToken == token);
+    }
 }

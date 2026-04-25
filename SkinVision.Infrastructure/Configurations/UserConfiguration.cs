@@ -27,6 +27,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.PasswordHash)
             .IsRequired();
 
+        builder.Property(u => u.PasswordResetToken)
+            .HasMaxLength(128);
+
+        builder.HasIndex(u => u.PasswordResetToken)
+            .IsUnique()
+            .HasFilter("[PasswordResetToken] IS NOT NULL");
+
         builder.Property(u => u.CreatedAt)
             .HasDefaultValueSql("GETUTCDATE()");
 

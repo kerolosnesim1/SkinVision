@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using SkinVision.Application.DTOs;
 using SkinVision.Application.Interfaces.Repositories;
@@ -7,6 +8,7 @@ using SkinVision.Domain.Entities;
 using SkinVision.Domain.Enums;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace SkinVision.Application.Services;
@@ -15,11 +17,16 @@ public class AuthService : IAuthService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(IUnitOfWork unitOfWork, IConfiguration configuration)
+    public AuthService(
+        IUnitOfWork unitOfWork,
+        IConfiguration configuration,
+        ILogger<AuthService> logger)
     {
         _unitOfWork = unitOfWork;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request)
@@ -85,6 +92,53 @@ public class AuthService : IAuthService
         await _unitOfWork.Users.UpdateAsync(user);
         await _unitOfWork.SaveChangesAsync();
         return true;
+    }
+
+    public async Task RequestPasswordResetAsync(ForgotPasswordRequestDto request)
+    {
+        var email = request.Email.Trim();
+        var user = await _unitOfWork.Users.FindByEmailWithProfileAsync(email);
+        if (user == null)
+            return;
+
+        var token = GeneratePasswordResetToken();
+        user.PasswordResetToken = token;
+        user.PasswordResetTokenExpires = DateTime.UtcNow.AddHours(1);
+        await _unitOfWork.Users.UpdateAsync(user);
+        await _unitOfWork.SaveChangesAsync();
+
+        var baseUrl = _configuration["Frontend:BaseUrl"]?.TrimEnd('/') ?? "http://localhost:4200";
+        var link = $"{baseUrl}/reset-password?token={Uri.EscapeDataString(token)}";
+        _logger.LogInformation("Password reset for {Email}. Reset link: {ResetLink}", user.Email, link);
+    }
+
+    public async Task<(bool Success, string? ErrorMessage)> ResetPasswordWithTokenAsync(ResetPasswordWithTokenDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 8)
+            return (false, "Password must be at least 8 characters.");
+
+        var user = await _unitOfWork.Users.FindByPasswordResetTokenAsync(request.Token);
+        if (user == null
+            || user.PasswordResetTokenExpires == null
+            || user.PasswordResetTokenExpires < DateTime.UtcNow)
+            return (false, "Invalid or expired reset link. Please request a new one.");
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        user.PasswordResetToken = null;
+        user.PasswordResetTokenExpires = null;
+        await _unitOfWork.Users.UpdateAsync(user);
+        await _unitOfWork.SaveChangesAsync();
+        return (true, null);
+    }
+
+    private static string GeneratePasswordResetToken()
+    {
+        var bytes = new byte[32];
+        RandomNumberGenerator.Fill(bytes);
+        return Convert.ToBase64String(bytes)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
     }
 
     private static UserDto MapToUserDto(User user)

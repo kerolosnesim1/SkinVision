@@ -1,7 +1,7 @@
-import { Component, HostListener, OnInit } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { Component, HostListener } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { filter } from 'rxjs/operators';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -10,27 +10,19 @@ import { filter } from 'rxjs/operators';
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App implements OnInit {
+export class App {
   title = 'SkinVision';
   isScrolled = false;
   isMobileMenuOpen = false;
-  currentUser: any = null;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private auth: AuthService
+  ) {}
 
-  ngOnInit() {
-    this.checkUser();
-    
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      this.checkUser();
-    });
-  }
-
-  checkUser() {
-    const userStr = localStorage.getItem('currentUser');
-    this.currentUser = userStr ? JSON.parse(userStr) : null;
+  /** Exposes auth state to the template; same stream as AuthService.currentUser$. */
+  get currentUser$() {
+    return this.auth.currentUser$;
   }
 
   @HostListener('window:scroll')
@@ -47,8 +39,7 @@ export class App implements OnInit {
   }
 
   logout() {
-    localStorage.removeItem('currentUser');
-    this.currentUser = null;
+    this.auth.logout();
     this.router.navigate(['/']);
   }
 }
