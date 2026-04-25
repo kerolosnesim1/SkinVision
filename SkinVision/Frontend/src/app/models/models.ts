@@ -75,6 +75,15 @@ export interface CreateExamination {
     imageIds: number[];
 }
 
+export interface UpdateExamination {
+    diagnosis?: string;
+    treatment?: string;
+    followUp?: string;
+    riskLevel?: string;
+    followUpDate?: Date;
+    status?: number;
+}
+
 // Image and Prediction models
 export interface Image {
     imageId: number;

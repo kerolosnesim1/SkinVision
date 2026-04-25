@@ -542,7 +542,7 @@ export class ViewExaminationComponent implements OnInit {
     private route: ActivatedRoute,
     private examinationService: ExaminationService,
     private reportService: ReportService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.examId = this.route.snapshot.params['id'];
@@ -644,6 +644,6 @@ export class ViewExaminationComponent implements OnInit {
     this.toastMessage = message;
     setTimeout(() => {
       this.toastMessage = '';
-    }, 3000);
+    }, 30);
   }
 }

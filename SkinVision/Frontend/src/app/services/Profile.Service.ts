@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { User, DoctorProfile } from '../models/models';
+import { DoctorProfile } from '../models/models';
 
 @Injectable({
     providedIn: 'root'
@@ -13,11 +12,11 @@ export class ProfileService {
 
     constructor(private http: HttpClient) { }
 
-    getProfile(): Observable<User> {
-        return this.http.get<User>(this.apiUrl);
+    getProfile(): Observable<DoctorProfile> {
+        return this.http.get<DoctorProfile>(this.apiUrl);
     }
 
-    updateProfile(profileData: DoctorProfile): Observable<User> {
-        return this.http.put<User>(this.apiUrl, profileData);
+    updateProfile(profileData: DoctorProfile): Observable<DoctorProfile> {
+        return this.http.put<DoctorProfile>(this.apiUrl, profileData);
     }
 }

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Examination, ExaminationListItem, ExaminationStats, CreateExamination, Image, Prediction } from '../models/models';
+import { Examination, ExaminationListItem, ExaminationStats, CreateExamination, Image, UpdateExamination } from '../models/models';
 
 @Injectable({
     providedIn: 'root'
@@ -29,7 +29,7 @@ export class ExaminationService {
         return this.http.post<Examination>(this.apiUrl, data);
     }
 
-    updateExamination(id: number, data: any): Observable<Examination> {
+    updateExamination(id: number, data: UpdateExamination): Observable<Examination> {
         return this.http.put<Examination>(`${this.apiUrl}/${id}`, data);
     }
 
@@ -40,10 +40,12 @@ export class ExaminationService {
     getStats(): Observable<ExaminationStats> {
         return this.http.get<ExaminationStats>(`${this.apiUrl}/stats`);
     }
-    uploadImage(id: number, file: File, bodyPart?: string): Observable<Image> {
+    uploadImage(id: number, file: File, metadata?: { bodyPart?: string }): Observable<Image> {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('bodyPart', bodyPart || '');
+        if (metadata?.bodyPart) {
+            formData.append('bodyPart', metadata.bodyPart);
+        }
         return this.http.post<Image>(`${this.apiUrl}/${id}/images`, formData);
     }
 

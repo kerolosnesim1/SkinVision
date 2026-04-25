@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, switchMap } from 'rxjs/operators';
 import { ExaminationService } from '../../services/examination.service';
 import { ExaminationListItem } from '../../models/models';
 import { ReportService } from '../../services/report.service';
@@ -42,6 +42,13 @@ import { ReportService } from '../../services/report.service';
 
       <!-- Examinations Table -->
       <div class="card">
+        <div *ngIf="isLoading" class="empty-state">
+          <p>Loading examinations...</p>
+        </div>
+        <div *ngIf="errorMessage" class="empty-state">
+          <p>{{ errorMessage }}</p>
+        </div>
+
         <table class="exam-table">
           <thead>
             <tr>
@@ -53,9 +60,9 @@ import { ReportService } from '../../services/report.service';
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody *ngIf="!isLoading && !errorMessage">
             <tr *ngFor="let exam of filteredExaminations">
-              <td class="date-cell">{{ exam.createdAt }}</td>
+              <td class="date-cell">{{ exam.createdAt | date:'mediumDate' }}</td>
               <td>
                 <strong>{{ exam.patientName }}</strong>
                 <span class="phone">{{ exam.patientPhone }}</span>
@@ -75,10 +82,12 @@ import { ReportService } from '../../services/report.service';
           </tbody>
         </table>
 
-        <div *ngIf="filteredExaminations.length === 0" class="empty-state">
+        <div *ngIf="!isLoading && !errorMessage && filteredExaminations.length === 0" class="empty-state">
           <p>No examinations found</p>
         </div>
       </div>
+
+      <div class="toast" *ngIf="toastMessage">{{ toastMessage }}</div>
     </div>
   `,
   styles: [`
@@ -213,6 +222,17 @@ import { ReportService } from '../../services/report.service';
       color: var(--text-light);
     }
 
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: rgba(22, 125, 126, 0.95);
+      color: white;
+      z-index: 1000;
+    }
+
     @media (max-width: 768px) {
       .filters {
         flex-direction: column;
@@ -234,6 +254,9 @@ export class ExaminationsListComponent implements OnInit, OnDestroy {
   filterRisk = '';
   filterDate = '';
   filteredExaminations: ExaminationListItem[] = [];
+  isLoading = false;
+  errorMessage = '';
+  toastMessage = '';
 
   /** Subject that emits every time a filter changes; debounced to avoid API spam */
   private filterSubject = new Subject<void>();
@@ -250,7 +273,7 @@ export class ExaminationsListComponent implements OnInit, OnDestroy {
    */
   ngOnInit(): void {
     this.filterSubject
-      .pipe(debounceTime(300), distinctUntilChanged())
+      .pipe(debounceTime(300))
       .subscribe(() => this.loadExaminations());
 
     this.loadExaminations();
@@ -263,14 +286,19 @@ export class ExaminationsListComponent implements OnInit, OnDestroy {
 
   /* The server handles all filtering */
   loadExaminations(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
     this.examinationService
       .getExaminations(this.searchQuery, this.filterRisk, this.filterDate)
       .subscribe({
         next: (list) => {
           this.filteredExaminations = list;
+          this.isLoading = false;
         },
         error: (error) => {
           console.error('Failed to load examinations:', error);
+          this.errorMessage = 'Failed to load examinations.';
+          this.isLoading = false;
         }
       });
   }
@@ -302,10 +330,19 @@ export class ExaminationsListComponent implements OnInit, OnDestroy {
           a.download = `report-${exam.diagnosisId}.pdf`;
           a.click();
           window.URL.revokeObjectURL(url);
+          this.showToast('Report downloaded');
         },
         error: (error) => {
           console.error('Failed to download report:', error);
+          this.showToast('Failed to generate/download report');
         }
       });
+  }
+
+  private showToast(message: string): void {
+    this.toastMessage = message;
+    setTimeout(() => {
+      this.toastMessage = '';
+    }, 3000);
   }
 }

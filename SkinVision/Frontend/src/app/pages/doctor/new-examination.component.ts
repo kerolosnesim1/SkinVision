@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ExaminationService } from '../../services/examination.service';
+import { CreateExamination, UpdateExamination } from '../../models/models';
 
 @Component({
   selector: 'app-new-examination',
@@ -145,13 +147,18 @@ import { FormsModule } from '@angular/forms';
 
           <!-- Actions -->
           <div class="actions">
-            <button class="btn btn-secondary" (click)="saveDraft()">Save Draft</button>
-            <button class="btn btn-primary" (click)="complete()" [disabled]="!isValid()">
+            <button class="btn btn-secondary" (click)="saveDraft()" [disabled]="savingDraft || completing">
+              {{ savingDraft ? 'Saving...' : 'Save Draft' }}
+            </button>
+            <button class="btn btn-primary" (click)="complete()" [disabled]="!isValid() || savingDraft || completing">
               Complete & Generate Report
             </button>
           </div>
+          <div *ngIf="errorMessage" class="error-text">{{ errorMessage }}</div>
         </div>
       </div>
+
+      <div class="toast" *ngIf="toastMessage">{{ toastMessage }}</div>
     </div>
   `,
   styles: [`
@@ -374,6 +381,23 @@ import { FormsModule } from '@angular/forms';
       font-size: 13px;
     }
 
+    .error-text {
+      color: #b42318;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: rgba(22, 125, 126, 0.95);
+      color: white;
+      z-index: 1000;
+    }
+
     @media (max-width: 1024px) {
       .exam-layout {
         grid-template-columns: 1fr;
@@ -398,11 +422,19 @@ export class NewExaminationComponent {
     followUpDate: ''
   };
 
+  examinationId: number | null = null;
   selectedImage: { file: File, preview: string } | null = null;
   aiLoading = false;
   aiResult: any = null;
+  savingDraft = false;
+  completing = false;
+  errorMessage = '';
+  toastMessage = '';
 
-  constructor(private router: Router) { }
+  constructor(
+    private router: Router,
+    private examinationService: ExaminationService
+  ) { }
 
   onImageUpload(event: any) {
     const file = event.target.files[0];
@@ -425,22 +457,32 @@ export class NewExaminationComponent {
     this.aiResult = null;
   }
 
-  analyze() {
-    if (!this.selectedImage) return;
+  analyze(): void {
+    if (!this.selectedImage) {
+      return;
+    }
+
+    if (!this.examinationId) {
+      this.showToast('Save draft first before analyzing image.');
+      return;
+    }
 
     this.aiLoading = true;
-    setTimeout(() => {
-      this.aiResult = {
-        classification: 'Melanocytic Nevus',
-        findings: [
-          'Regular border pattern detected',
-          'Uniform pigmentation',
-          'Size within normal range',
-          'No concerning features identified'
-        ]
-      };
-      this.aiLoading = false;
-    }, 2500);
+    this.errorMessage = '';
+    this.examinationService
+      .uploadImage(this.examinationId, this.selectedImage.file)
+      .subscribe({
+        next: (image) => {
+          this.aiResult = image.aiResult ?? null;
+          this.aiLoading = false;
+          this.showToast('Image uploaded successfully');
+        },
+        error: (error) => {
+          console.error('Error uploading image:', error);
+          this.errorMessage = 'Failed to upload/analyze image.';
+          this.aiLoading = false;
+        }
+      });
   }
 
   isValid(): boolean {
@@ -450,16 +492,103 @@ export class NewExaminationComponent {
       this.exam.treatment.trim() !== '';
   }
 
-  saveDraft() {
-    alert('Draft saved');
-  }
-
-  complete() {
-    if (!this.isValid()) {
-      alert('Please fill all required fields');
+  saveDraft(): void {
+    if (!this.exam.patientName.trim() || !this.exam.reason.trim()) {
+      this.errorMessage = 'Patient name and reason are required to save draft.';
       return;
     }
-    alert('Examination completed! Generating PDF report...');
-    this.router.navigate(['/doctor']);
+
+    this.savingDraft = true;
+    this.errorMessage = '';
+
+    if (!this.examinationId) {
+      const payload: CreateExamination = {
+        patientName: this.exam.patientName,
+        patientPhone: this.exam.patientPhone || undefined,
+        patientAge: this.exam.patientAge ?? undefined,
+        reason: this.exam.reason,
+        diagnosis: this.exam.diagnosis,
+        treatment: this.exam.treatment,
+        followUp: this.exam.followUp || undefined,
+        riskLevel: this.exam.riskLevel,
+        followUpDate: this.exam.followUpDate ? new Date(this.exam.followUpDate) : undefined,
+        imageIds: []
+      };
+
+      this.examinationService.createExamination(payload).subscribe({
+        next: (examination) => {
+          this.examinationId = examination.diagnosisId;
+          this.savingDraft = false;
+          this.showToast('Draft created');
+        },
+        error: (error) => {
+          console.error('Error creating draft:', error);
+          this.errorMessage = 'Failed to save draft.';
+          this.savingDraft = false;
+        }
+      });
+      return;
+    }
+
+    const payload: UpdateExamination = this.buildUpdatePayload(0);
+    this.examinationService.updateExamination(this.examinationId, payload).subscribe({
+      next: () => {
+        this.savingDraft = false;
+        this.showToast('Draft updated');
+      },
+      error: (error) => {
+        console.error('Error updating draft:', error);
+        this.errorMessage = 'Failed to update draft.';
+        this.savingDraft = false;
+      }
+    });
+  }
+
+  complete(): void {
+    if (!this.isValid()) {
+      this.errorMessage = 'Please fill all required fields before completing.';
+      return;
+    }
+
+    if (!this.examinationId) {
+      this.errorMessage = 'Save draft first before completing.';
+      return;
+    }
+
+    this.completing = true;
+    this.errorMessage = '';
+
+    const payload: UpdateExamination = this.buildUpdatePayload(1);
+    this.examinationService.updateExamination(this.examinationId, payload).subscribe({
+      next: (examination) => {
+        this.completing = false;
+        this.showToast('Examination completed');
+        this.router.navigate(['/doctor/examination', examination.diagnosisId]);
+      },
+      error: (error) => {
+        console.error('Error completing examination:', error);
+        this.errorMessage = 'Failed to complete examination.';
+        this.completing = false;
+      }
+    });
+  }
+
+  private buildUpdatePayload(status: number): UpdateExamination {
+    return {
+      diagnosis: this.exam.diagnosis || undefined,
+      treatment: this.exam.treatment || undefined,
+      followUp: this.exam.followUp || undefined,
+      riskLevel: this.exam.riskLevel || undefined,
+      followUpDate: this.exam.followUpDate ? new Date(this.exam.followUpDate) : undefined,
+      status
+    };
+  }
+
+  private showToast(message: string): void {
+    this.toastMessage = message;
+    setTimeout(() => {
+      this.toastMessage = '';
+    }, 3000);
   }
 }
+

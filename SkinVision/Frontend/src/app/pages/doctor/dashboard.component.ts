@@ -55,8 +55,11 @@ import { Examination, ExaminationStats, ExaminationListItem } from '../../models
           <div *ngIf="isLoading" class="empty-state">
             <p>Loading examinations...</p>
           </div>
+          <div *ngIf="errorMessage" class="empty-state">
+            <p>{{ errorMessage }}</p>
+          </div>
           
-          <div *ngIf="!isLoading">
+          <div *ngIf="!isLoading && !errorMessage">
             <div *ngFor="let exam of recentExaminations" class="exam-card">
               <div class="exam-info">
                 <h4>{{ exam.patientName }}</h4>
@@ -82,6 +85,8 @@ import { Examination, ExaminationStats, ExaminationListItem } from '../../models
           </div>
         </div>
       </div>
+
+      <div class="toast" *ngIf="toastMessage">{{ toastMessage }}</div>
     </div>
   `,
   styles: [`
@@ -259,6 +264,17 @@ import { Examination, ExaminationStats, ExaminationListItem } from '../../models
       margin-bottom: 20px;
     }
 
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: rgba(22, 125, 126, 0.95);
+      color: white;
+      z-index: 1000;
+    }
+
     @media (max-width: 768px) {
       .dashboard-header {
         flex-direction: column;
@@ -272,11 +288,13 @@ import { Examination, ExaminationStats, ExaminationListItem } from '../../models
   `]
 })
 export class DoctorDashboardComponent implements OnInit {
-  doctorName: string = '';
-  clinicName: string = '';
+  doctorName = '';
+  clinicName = '';
   stats: ExaminationStats = { total: 0, today: 0, aiAnalyses: 0 };
   recentExaminations: ExaminationListItem[] = [];
-  isLoading: boolean = true;
+  isLoading = true;
+  errorMessage = '';
+  toastMessage = '';
 
   constructor(
     private examinationService: ExaminationService,
@@ -307,6 +325,7 @@ export class DoctorDashboardComponent implements OnInit {
       },
       error: (error) => {
         console.error('Failed to load stats:', error);
+        this.showToast('Could not load dashboard stats');
       }
     });
   }
@@ -317,11 +336,20 @@ export class DoctorDashboardComponent implements OnInit {
         // Take only the first 5 examinations for recent list
         this.recentExaminations = examinations.slice(0, 5);
         this.isLoading = false;
+        this.errorMessage = '';
       },
       error: (error) => {
         console.error('Failed to load examinations:', error);
+        this.errorMessage = 'Failed to load recent examinations.';
         this.isLoading = false;
       }
     });
+  }
+
+  private showToast(message: string): void {
+    this.toastMessage = message;
+    setTimeout(() => {
+      this.toastMessage = '';
+    }, 3000);
   }
 }
