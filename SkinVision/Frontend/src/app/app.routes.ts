@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
+import { noAuthGuard } from './guards/no-auth.guard';
 
 export const routes: Routes = [
   {
@@ -8,17 +9,19 @@ export const routes: Routes = [
   },
   {
     path: 'login',
+    canMatch: [noAuthGuard],
     loadComponent: () => import('./pages/auth/login.component').then(m => m.LoginComponent)
   },
   {
     path: 'register',
+    canMatch: [noAuthGuard],
     loadComponent: () => import('./pages/auth/register.component').then(m => m.RegisterComponent)
   },
   {
-   path: 'dashboard',
-    canMatch: [authGuard],
-    loadComponent: () => import('./pages/doctor/dashboard.component').then(m => m.DoctorDashboardComponent)
-   },
+    path: 'doctor',
+    redirectTo: 'dashboard',
+    pathMatch: 'full'
+  },
   {
     path: 'reset-password',
     loadComponent: () => import('./pages/auth/reset-password.component').then(m => m.ResetPasswordComponent)
@@ -40,7 +43,7 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/static/privacy.component').then(m => m.PrivacyComponent)
   },
   {
-    path: 'doctor',
+    path: 'dashboard',
     canMatch: [authGuard],
     loadChildren: () => import('./pages/doctor/doctor.routes').then(m => m.DOCTOR_ROUTES)
   },

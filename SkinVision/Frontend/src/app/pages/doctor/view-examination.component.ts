@@ -13,33 +13,23 @@ import { environment } from '../../../environments/environment';
   template: `
     <div class="view-page">
       <div class="page-header">
-        <a routerLink="/doctor/examinations" class="back-link">← Back to History</a>
+        <a routerLink="/dashboard/examinations" class="back-link">← Back to History</a>
         <div class="header-actions">
           <button
             class="btn btn-primary"
             (click)="generateAndDownloadPDF()"
-            [disabled]="isGenerating"
             id="download-report-btn">
-            <span *ngIf="!isGenerating">📄 Download PDF</span>
-            <span *ngIf="isGenerating">⏳ Generating...</span>
+            📄 Download PDF
           </button>
         </div>
       </div>
 
-      <!-- Loading State -->
-      <div class="loading-state" *ngIf="isLoading">
-        <div class="spinner"></div>
-        <p>Loading examination...</p>
-      </div>
-
-      <!-- Error State -->
       <div class="error-state" *ngIf="errorMessage">
         <p>{{ errorMessage }}</p>
-        <a routerLink="/doctor/examinations" class="btn btn-primary">Back to Examinations</a>
+        <a routerLink="/dashboard/examinations" class="btn btn-primary">Back to Examinations</a>
       </div>
 
-      <!-- Report Card -->
-      <div class="report-card" *ngIf="exam && !isLoading">
+      <div class="report-card" *ngIf="exam">
         <div class="report-header">
           <div class="clinic-info">
            <h1>{{ exam.doctor?.clinicName || 'SkinVision Clinic' }}</h1>
@@ -199,33 +189,11 @@ import { environment } from '../../../environments/environment';
       gap: 10px;
     }
 
-    .btn-primary:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-    }
-
-    /* Loading & Error */
-    .loading-state, .error-state {
+    .error-state {
       text-align: center;
       padding: 80px 20px;
       color: var(--text-light);
     }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--border-color);
-      border-top-color: var(--primary-color);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Report Card */
     .report-card {
       background: var(--white);
       border-radius: 12px;
@@ -533,8 +501,7 @@ export class ViewExaminationComponent implements OnInit {
   exam: Examination | null = null;
   doctorProfile: DoctorProfile | null = null;
   reports: Report[] = [];
-  isLoading = true;
-  isGenerating = false;
+  private pdfBusy = false;
   errorMessage = '';
   toastMessage = '';
 
@@ -551,15 +518,12 @@ export class ViewExaminationComponent implements OnInit {
   }
 
   loadExamination() {
-    this.isLoading = true;
     this.examinationService.getExamination(+this.examId).subscribe({
       next: (exam) => {
         this.exam = exam;
-        this.isLoading = false;
       },
       error: (err) => {
         this.errorMessage = 'Failed to load examination.';
-        this.isLoading = false;
         console.error(err);
       }
     });
@@ -573,27 +537,29 @@ export class ViewExaminationComponent implements OnInit {
   }
 
   generateAndDownloadPDF() {
-    this.isGenerating = true;
+    if (this.pdfBusy) {
+      return;
+    }
+    this.pdfBusy = true;
     this.reportService.generateReport(+this.examId).subscribe({
       next: (report) => {
         this.reports.unshift(report);
         this.showToast('Report generated successfully!');
 
-        // Immediately download the generated report
         this.reportService.downloadReport(report.reportId).subscribe({
           next: (blob) => {
             this.triggerDownload(blob, `${report.title || 'Report'}.pdf`);
-            this.isGenerating = false;
+            this.pdfBusy = false;
           },
           error: () => {
             this.showToast('Report created but download failed. Try from the list below.');
-            this.isGenerating = false;
+            this.pdfBusy = false;
           }
         });
       },
       error: (err) => {
         this.showToast('Failed to generate report. Please try again.');
-        this.isGenerating = false;
+        this.pdfBusy = false;
         console.error(err);
       }
     });
@@ -644,6 +610,6 @@ export class ViewExaminationComponent implements OnInit {
     this.toastMessage = message;
     setTimeout(() => {
       this.toastMessage = '';
-    }, 30);
+    }, 3000);
   }
 }

@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { debounceTime, switchMap } from 'rxjs/operators';
+import { debounceTime, startWith, switchMap } from 'rxjs/operators';
 import { ExaminationService } from '../../services/examination.service';
 import { ExaminationListItem } from '../../models/models';
 import { ReportService } from '../../services/report.service';
@@ -15,10 +15,10 @@ import { ReportService } from '../../services/report.service';
     <div class="examinations-page">
       <div class="page-header">
         <div>
-          <a routerLink="/doctor" class="back-link">← Back to Dashboard</a>
+          <a routerLink="/dashboard" class="back-link">← Back to Dashboard</a>
           <h1>Examination History</h1>
         </div>
-        <a routerLink="/doctor/examination/new" class="btn btn-primary">+ New Examination</a>
+        <a routerLink="/dashboard/examination/new" class="btn btn-primary">+ New Examination</a>
       </div>
 
       <!-- Filters -->
@@ -42,9 +42,6 @@ import { ReportService } from '../../services/report.service';
 
       <!-- Examinations Table -->
       <div class="card">
-        <div *ngIf="isLoading" class="empty-state">
-          <p>Loading examinations...</p>
-        </div>
         <div *ngIf="errorMessage" class="empty-state">
           <p>{{ errorMessage }}</p>
         </div>
@@ -60,7 +57,7 @@ import { ReportService } from '../../services/report.service';
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody *ngIf="!isLoading && !errorMessage">
+          <tbody *ngIf="!errorMessage">
             <tr *ngFor="let exam of filteredExaminations">
               <td class="date-cell">{{ exam.createdAt | date:'mediumDate' }}</td>
               <td>
@@ -75,15 +72,15 @@ import { ReportService } from '../../services/report.service';
                 </span>
               </td>
               <td class="actions-cell">
-                <a [routerLink]="['/doctor/examination', exam.diagnosisId]" class="btn btn-secondary btn-sm">View</a>
+                <a [routerLink]="['/dashboard/examination', exam.diagnosisId]" class="btn btn-secondary btn-sm">View</a>
                 <button class="btn btn-secondary btn-sm" (click)="downloadReport(exam)">PDF</button>
               </td>
             </tr>
           </tbody>
         </table>
 
-        <div *ngIf="!isLoading && !errorMessage && filteredExaminations.length === 0" class="empty-state">
-          <p>No examinations found</p>
+        <div *ngIf="!errorMessage && filteredExaminations.length === 0" class="empty-state">
+          <p>{{ (searchQuery || filterRisk || filterDate) ? 'No examinations match your filters.' : 'No examinations yet.' }}</p>
         </div>
       </div>
 
@@ -254,59 +251,58 @@ export class ExaminationsListComponent implements OnInit, OnDestroy {
   filterRisk = '';
   filterDate = '';
   filteredExaminations: ExaminationListItem[] = [];
-  isLoading = false;
   errorMessage = '';
   toastMessage = '';
 
-  /** Subject that emits every time a filter changes; debounced to avoid API spam */
   private filterSubject = new Subject<void>();
+  private destroy$ = new Subject<void>();
 
   constructor(
     private examinationService: ExaminationService,
     private reportService: ReportService
   ) { }
 
-  /**
-   * On init: load the initial list AND set up the debounced filter pipeline.
-   * debounceTime(300)  – waits 300 ms of silence before firing the API call.
-   * distinctUntilChanged() – skips duplicate consecutive emissions (optional but nice).
-   */
   ngOnInit(): void {
+    console.log('[ExamsList] ngOnInit called');
+
     this.filterSubject
-      .pipe(debounceTime(300))
-      .subscribe(() => this.loadExaminations());
-
-    this.loadExaminations();
-  }
-
-  /** Clean up the Subject to avoid memory leaks */
-  ngOnDestroy(): void {
-    this.filterSubject.complete();
-  }
-
-  /* The server handles all filtering */
-  loadExaminations(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.examinationService
-      .getExaminations(this.searchQuery, this.filterRisk, this.filterDate)
+      .pipe(
+        startWith(undefined),
+        debounceTime(300),
+        switchMap(() => {
+          console.log('[ExamsList] switchMap firing — searchQuery:', this.searchQuery, 'filterRisk:', this.filterRisk, 'filterDate:', this.filterDate);
+          return this.examinationService.getExaminations(
+            this.searchQuery || undefined,
+            this.filterRisk || undefined,
+            this.filterDate || undefined
+          );
+        }),
+        // takeUntil ensures the subscription is cleaned up when component is destroyed
+        // (using destroy$ instead of filterSubject.complete() to avoid completing the source)
+      )
       .subscribe({
         next: (list) => {
+          console.log('[ExamsList] Received list count:', list.length);
+          if (list.length > 0) {
+            console.log('[ExamsList] First item keys:', Object.keys(list[0]));
+            console.log('[ExamsList] First item raw:', JSON.stringify(list[0]));
+          }
           this.filteredExaminations = list;
-          this.isLoading = false;
+          this.errorMessage = '';
         },
         error: (error) => {
-          console.error('Failed to load examinations:', error);
+          console.error('[ExamsList] Failed to load examinations — SUBSCRIPTION IS NOW DEAD:', error);
           this.errorMessage = 'Failed to load examinations.';
-          this.isLoading = false;
         }
       });
   }
 
-  /**
-   * Pushes a value onto the filter Subject instead of calling the API directly.
-   * The Subject's debounce pipeline will fire loadExaminations() after 300 ms of inactivity.
-   */
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.filterSubject.complete();
+  }
+
   applyFilters(): void {
     this.filterSubject.next();
   }

@@ -225,7 +225,7 @@ export class RegisterComponent {
     this.auth.register(this.form).subscribe({
       next: () => {
         alert('Account created successfully!');
-        this.router.navigate(['/doctor']);
+        this.router.navigate(['/dashboard']);
       },
       error: (err: unknown) => {
         let message = 'Could not create account.';

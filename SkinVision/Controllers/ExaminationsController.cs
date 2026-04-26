@@ -18,13 +18,13 @@ public class ExaminationsController : BaseApiController
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetExaminations([FromQuery] string? searchQuery,[FromQuery] string? riskLevel)
+    public async Task<IActionResult> GetExaminations([FromQuery] string? searchQuery, [FromQuery] string? riskLevel, [FromQuery] DateOnly? date)
     {
         var doctorId = GetCurrentUserId();
         if (doctorId == null)
             return Unauthorized();
 
-        var examinations = await _examinationService.GetExaminationsAsync(doctorId.Value, searchQuery, riskLevel);
+        var examinations = await _examinationService.GetExaminationsAsync(doctorId.Value, searchQuery, riskLevel, date);
         return Ok(examinations);
     }
 

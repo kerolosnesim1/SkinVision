@@ -35,11 +35,10 @@ import { AuthService } from '../../services/auth.service';
               name="email"
               placeholder="Enter your email"
               required
-              [disabled]="submitting"
             />
           </div>
-          <button type="submit" class="btn-submit" [disabled]="submitting || !email">
-            {{ submitting ? 'Sending…' : 'Send reset link' }}
+          <button type="submit" class="btn-submit" [disabled]="!email">
+            Send reset link
           </button>
         </form>
 
@@ -53,7 +52,6 @@ import { AuthService } from '../../services/auth.service';
               placeholder="At least 8 characters"
               required
               minlength="8"
-              [disabled]="submitting"
             />
           </div>
           <div class="form-group">
@@ -64,15 +62,14 @@ import { AuthService } from '../../services/auth.service';
               name="confirmPassword"
               placeholder="Confirm new password"
               required
-              [disabled]="submitting"
             />
           </div>
           <button
             type="submit"
             class="btn-submit"
-            [disabled]="submitting || !newPassword || newPassword !== confirmPassword"
+            [disabled]="!newPassword || newPassword !== confirmPassword"
           >
-            {{ submitting ? 'Saving…' : 'Update password' }}
+            Update password
           </button>
         </form>
 
@@ -185,7 +182,7 @@ export class ResetPasswordComponent implements OnInit {
   token = '';
   newPassword = '';
   confirmPassword = '';
-  submitting = false;
+  private reqBusy = false;
   errorMessage = '';
   successMessage = '';
 
@@ -200,26 +197,32 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   onRequestReset(): void {
+    if (this.reqBusy) {
+      return;
+    }
     this.errorMessage = '';
     this.successMessage = '';
     if (!this.email.trim()) {
       this.errorMessage = 'Please enter your email.';
       return;
     }
-    this.submitting = true;
+    this.reqBusy = true;
     this.auth.forgotPassword(this.email.trim()).subscribe({
       next: (res) => {
         this.successMessage = res.message;
-        this.submitting = false;
+        this.reqBusy = false;
       },
       error: (err: unknown) => {
-        this.submitting = false;
+        this.reqBusy = false;
         this.errorMessage = this.httpErrorMessage(err, 'Could not start password reset.');
       }
     });
   }
 
   onSetNewPassword(): void {
+    if (this.reqBusy) {
+      return;
+    }
     this.errorMessage = '';
     this.successMessage = '';
     if (this.newPassword.length < 8) {
@@ -230,15 +233,15 @@ export class ResetPasswordComponent implements OnInit {
       this.errorMessage = 'Passwords do not match.';
       return;
     }
-    this.submitting = true;
+    this.reqBusy = true;
     this.auth.resetPasswordWithToken(this.token, this.newPassword).subscribe({
       next: (res) => {
         this.successMessage = res.message;
-        this.submitting = false;
+        this.reqBusy = false;
         setTimeout(() => this.router.navigate(['/login']), 2000);
       },
       error: (err: unknown) => {
-        this.submitting = false;
+        this.reqBusy = false;
         this.errorMessage = this.httpErrorMessage(err, 'Could not reset password.');
       }
     });

@@ -73,6 +73,7 @@ export interface CreateExamination {
     riskLevel: string;
     followUpDate?: Date;
     imageIds: number[];
+    status?: number;
 }
 
 export interface UpdateExamination {

@@ -1,13 +1,15 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Observable } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
+import { User } from '../../models/models';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
   imports: [RouterLink, CommonModule],
   template: `
-    <!-- Hero Section (NEW) -->
     <section class="hero">
       <div class="hero-bg-accent"></div>
       <div class="container hero-container">
@@ -27,13 +29,13 @@ import { CommonModule } from '@angular/common';
             Instant analysis, risk assessment, and professional reporting in one secure workflow.
           </p>
           <div class="hero-actions">
-            <a routerLink="/register" class="btn btn-primary btn-lg">
+            <button (click)="onGetStarted()" class="btn btn-primary btn-lg">
               Get Started
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
-            </a>
-            <a routerLink="/login" class="btn btn-outline btn-lg">Doctor Login</a>
+            </button>
+            <a *ngIf="!(isLoggedIn$ | async)" routerLink="/login" class="btn btn-outline btn-lg">Doctor Login</a>
           </div>
           <div class="trust-indicator">
             <div class="trust-avatars">
@@ -44,58 +46,22 @@ import { CommonModule } from '@angular/common';
             <p>Trusted by <strong>Best Dermatologists</strong></p>
           </div>
         </div>
-        
+
         <div class="hero-visual">
-          <div class="interface-card main-card">
-            <div class="card-header">
-              <div class="dots">
-                <span></span><span></span><span></span>
-              </div>
-              <span class="header-title">SkinVision AI Analysis</span>
-            </div>
-            <div class="card-body">
-              <div class="scan-area">
-                <div class="scan-line"></div>
-                <div class="scan-overlay"></div>
-                <div class="lesion-spot"></div>
-              </div>
-              <div class="analysis-results">
-                <div class="result-row">
-                  <span class="label">Diagnosis</span>
-                  <span class="value highlight">Melanocytic Nevus</span>
-                </div>
-                <div class="result-row">
-                  <span class="label">Confidence</span>
-                  <div class="confidence-bar">
-                    <div class="fill" style="width: 98%"></div>
-                  </div>
-                  <span class="value">98%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="floating-badge badge-top">
-            <span class="icon">⚡</span>
-            <div class="text">
-              <span class="title">Instant</span>
-              <span class="subtitle">Analysis</span>
-            </div>
-          </div>
-          
-          <div class="floating-badge badge-bottom">
-            <span class="icon"></span>
-            <div class="text">
-              <span class="title">Lesion
-</span>
-              <span class="subtitle">Detected</span>
-            </div>
+          <div class="hero-image-frame">
+            <img
+              src="/assets/images/hero.webp"
+              width="800"
+              height="600"
+              alt="SkinVision: AI-assisted dermatology workflow"
+              loading="eager"
+              fetchpriority="high"
+            />
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Features Section (OLD) -->
     <section class="features">
       <div class="container">
         <div class="section-header">
@@ -150,7 +116,6 @@ import { CommonModule } from '@angular/common';
       </div>
     </section>
 
-    <!-- How It Works (OLD) -->
     <section class="workflow">
       <div class="container">
         <div class="section-header">
@@ -194,7 +159,6 @@ import { CommonModule } from '@angular/common';
       </div>
     </section>
 
-    <!-- AI Section (NEW) with Deep Learning Animation -->
     <section class="ai-section">
       <div class="container">
         <div class="ai-content">
@@ -223,10 +187,8 @@ import { CommonModule } from '@angular/common';
           </div>
           
           <div class="ai-visual">
-            <!-- Deep Learning Neural Network Animation -->
             <div class="neural-network-container">
               <svg class="neural-network" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
-                <!-- Layer 1: Input Layer -->
                 <g class="layer input-layer">
                   <circle cx="60" cy="60" r="18" class="node node-input"/>
                   <circle cx="60" cy="150" r="18" class="node node-input"/>
@@ -236,7 +198,6 @@ import { CommonModule } from '@angular/common';
                   <text x="60" y="244" class="node-label">Img</text>
                 </g>
 
-                <!-- Layer 2: Hidden Layer 1 -->
                 <g class="layer hidden-layer-1">
                   <circle cx="160" cy="50" r="20" class="node node-hidden"/>
                   <circle cx="160" cy="110" r="20" class="node node-hidden"/>
@@ -244,20 +205,17 @@ import { CommonModule } from '@angular/common';
                   <circle cx="160" cy="230" r="20" class="node node-hidden"/>
                 </g>
 
-                <!-- Layer 3: Hidden Layer 2 -->
                 <g class="layer hidden-layer-2">
                   <circle cx="260" cy="80" r="20" class="node node-hidden"/>
                   <circle cx="260" cy="150" r="20" class="node node-hidden"/>
                   <circle cx="260" cy="220" r="20" class="node node-hidden"/>
                 </g>
 
-                <!-- Layer 4: Output Layer -->
                 <g class="layer output-layer">
                   <circle cx="350" cy="100" r="22" class="node node-output"/>
                   <circle cx="350" cy="200" r="22" class="node node-output"/>
                 </g>
 
-                <!-- Connections - Layer 1 to 2 -->
                 <g class="connections conn-1-2">
                   <path d="M60 60 Q110 50 160 50" class="connection"/>
                   <path d="M60 60 Q110 80 160 110" class="connection"/>
@@ -273,7 +231,6 @@ import { CommonModule } from '@angular/common';
                   <path d="M60 240 Q110 160 160 230" class="connection"/>
                 </g>
 
-                <!-- Connections - Layer 2 to 3 -->
                 <g class="connections conn-2-3">
                   <path d="M160 50 Q210 65 260 80" class="connection"/>
                   <path d="M160 50 Q210 115 260 150" class="connection"/>
@@ -289,7 +246,6 @@ import { CommonModule } from '@angular/common';
                   <path d="M160 230 Q210 165 260 220" class="connection"/>
                 </g>
 
-                <!-- Connections - Layer 3 to 4 -->
                 <g class="connections conn-3-4">
                   <path d="M260 80 Q305 90 350 100" class="connection"/>
                   <path d="M260 80 Q305 150 350 200" class="connection"/>
@@ -299,7 +255,6 @@ import { CommonModule } from '@angular/common';
                   <path d="M260 220 Q305 150 350 200" class="connection"/>
                 </g>
 
-                <!-- Data Packets Animation -->
                 <g class="data-packets">
                   <circle r="4" class="packet packet-1">
                     <animateMotion dur="2s" repeatCount="indefinite" path="M60 60 Q110 50 160 50"/>
@@ -323,7 +278,6 @@ import { CommonModule } from '@angular/common';
                   </circle>
                 </g>
 
-                <!-- Processing Particles -->
                 <g class="particles">
                   <circle r="2" class="particle particle-1">
                     <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/>
@@ -345,21 +299,19 @@ import { CommonModule } from '@angular/common';
       </div>
     </section>
 
-    <!-- CTA Section (OLD) -->
     <section class="cta">
       <div class="container">
         <div class="cta-card">
           <h2>Ready to Modernize Your Practice?</h2>
           <p>Join dermatologists using AI to enhance their diagnostic workflow.</p>
           <div class="cta-buttons">
-            <a routerLink="/register" class="btn btn-white">Get Started</a>
+            <button (click)="onGetStarted()" class="btn btn-white">Get Started</button>
             <a routerLink="/contact" class="btn btn-ghost">Contact Us</a>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Footer (OLD) -->
     <footer class="footer">
       <div class="container">
         <div class="footer-grid">
@@ -397,7 +349,6 @@ import { CommonModule } from '@angular/common';
     </footer>
   `,
   styles: [`
-    /* Global Variables Re-enforcement */
     :host {
       --primary-color: #167D7E;
       --primary-dark: #126364;
@@ -410,7 +361,6 @@ import { CommonModule } from '@angular/common';
       --glass-border: rgba(255, 255, 255, 0.2);
     }
 
-    /* Base Layout */
     .container {
       max-width: 1200px;
       margin: 0 auto;
@@ -443,7 +393,6 @@ import { CommonModule } from '@angular/common';
       margin: 0;
     }
 
-    /* Enhanced Hero Section (NEW Styles) */
     .hero {
       position: relative;
       min-height: 100vh;
@@ -608,223 +557,30 @@ import { CommonModule } from '@angular/common';
       color: var(--text-dark);
     }
 
-    /* Hero Visual - Glassmorphism Interface (NEW Styles) */
     .hero-visual {
       position: relative;
-      height: 500px;
       display: flex;
       align-items: center;
       justify-content: center;
-      perspective: 1000px;
     }
 
-    .interface-card {
-      background: white;
+    .hero-image-frame {
+      width: 100%;
+      max-width: 560px;
       border-radius: 20px;
-      box-shadow: 
-        0 20px 50px rgba(0,0,0,0.1),
-        0 0 0 1px rgba(0,0,0,0.05);
       overflow: hidden;
-      width: 400px;
-      transform: rotateY(-10deg) rotateX(5deg);
-      transition: transform 0.5s ease;
+      box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(0, 0, 0, 0.05);
+      line-height: 0;
     }
 
-    .hero-visual:hover .interface-card {
-      transform: rotateY(-5deg) rotateX(2deg);
+    .hero-image-frame img {
+      display: block;
+      max-width: 100%;
+      height: auto;
     }
 
-    .card-header {
-      padding: 16px 20px;
-      background: #FAFAFA;
-      border-bottom: 1px solid #EEEEEE;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .dots {
-      display: flex;
-      gap: 6px;
-    }
-
-    .dots span {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #E5E7EB;
-    }
-
-    .dots span:nth-child(1) { background: #EF4444; }
-    .dots span:nth-child(2) { background: #F59E0B; }
-    .dots span:nth-child(3) { background: #10B981; }
-
-    .header-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: #9CA3AF;
-      letter-spacing: 0.5px;
-    }
-
-    .card-body {
-      padding: 24px;
-    }
-
-    .scan-area {
-      height: 200px;
-      background: linear-gradient(135deg, #FFE4C4, #DEB887);
-      border-radius: 12px;
-      margin-bottom: 24px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .scan-line {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: var(--primary-color);
-      box-shadow: 0 0 15px var(--primary-color);
-      animation: scan 3s infinite linear;
-      z-index: 5;
-    }
-
-    .scan-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(180deg, rgba(22, 125, 126, 0.1) 0%, transparent 100%);
-      transform-origin: top;
-      animation: scan-overlay 3s infinite linear;
-      z-index: 2;
-    }
-
-    .lesion-spot {
-      position: absolute;
-      top: 45%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 42px;
-      height: 36px;
-      background: radial-gradient(circle at 30% 30%, #5D4037, #3E2723);
-      border-radius: 40% 60% 60% 40% / 50% 60% 40% 50%;
-      box-shadow: 
-        inset 2px 2px 4px rgba(255,255,255,0.1),
-        0 0 4px rgba(62, 39, 35, 0.3);
-      opacity: 0.85;
-      z-index: 1;
-    }
-
-    @keyframes scan {
-      0% { top: 0; }
-      100% { top: 100%; }
-    }
-
-    .analysis-results {
-      background: #F8FAFC;
-      border-radius: 12px;
-      padding: 16px;
-    }
-
-    .result-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .result-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .result-row .label {
-      font-size: 13px;
-      color: var(--text-light);
-    }
-
-    .result-row .value {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-dark);
-    }
-
-    .result-row .value.highlight {
-      color: var(--primary-color);
-    }
-
-    .confidence-bar {
-      flex: 1;
-      height: 6px;
-      background: #E5E7EB;
-      border-radius: 100px;
-      margin: 0 12px;
-      overflow: hidden;
-    }
-
-    .confidence-bar .fill {
-      height: 100%;
-      background: #10B981;
-      border-radius: 100px;
-    }
-
-    /* Floating Badges */
-    .floating-badge {
-      position: absolute;
-      background: white;
-      padding: 16px 24px;
-      border-radius: 16px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.08);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 20;
-      animation: float 4s ease-in-out infinite;
-    }
-
-    .badge-top {
-      top: 80px;
-      left: -20px;
-      animation-delay: 0s;
-    }
-
-    .badge-bottom {
-      bottom: 60px;
-      right: -10px;
-      animation-delay: 2s;
-    }
-
-    .floating-badge .icon {
-      font-size: 24px;
-    }
-
-    .floating-badge .text {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .floating-badge .title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-dark);
-    }
-
-    .floating-badge .subtitle {
-      font-size: 11px;
-      color: var(--text-light);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    /* Features (OLD Styles) */
     .features {
       padding: 100px 0;
       background: white;
@@ -894,7 +650,6 @@ import { CommonModule } from '@angular/common';
       margin: 0;
     }
 
-    /* Workflow (OLD Styles) */
     .workflow {
       padding: 100px 0;
       background: #F8FAFC;
@@ -940,7 +695,6 @@ import { CommonModule } from '@angular/common';
       opacity: 0.3;
     }
 
-    /* AI Section (OLD Styles) */
     .ai-section {
       padding: 100px 0;
       background: white;
@@ -1000,7 +754,6 @@ import { CommonModule } from '@angular/common';
       align-items: center;
     }
 
-    /* Neural Network Animation Styles */
     .neural-network-container {
       position: relative;
       width: 400px;
@@ -1019,7 +772,6 @@ import { CommonModule } from '@angular/common';
       height: 100%;
     }
 
-    /* Network Nodes */
     .node {
       transition: all 0.3s ease;
     }
@@ -1057,7 +809,6 @@ import { CommonModule } from '@angular/common';
       cursor: pointer;
     }
 
-    /* Node Labels */
     .node-label {
       font-size: 8px;
       fill: #167D7E;
@@ -1065,7 +816,6 @@ import { CommonModule } from '@angular/common';
       text-anchor: middle;
     }
 
-    /* Connections */
     .connection {
       fill: none;
       stroke: rgba(22, 125, 126, 0.3);
@@ -1096,7 +846,6 @@ import { CommonModule } from '@angular/common';
       }
     }
 
-    /* Data Packets */
     .packet {
       fill: #167D7E;
       filter: drop-shadow(0 0 6px rgba(22, 125, 126, 0.8));
@@ -1108,7 +857,6 @@ import { CommonModule } from '@angular/common';
     .packet-4 { fill: #4DD4D8; }
     .packet-5 { fill: #167D7E; }
 
-    /* Particles */
     .particle {
       fill: #167D7E;
     }
@@ -1125,7 +873,6 @@ import { CommonModule } from '@angular/common';
       transform-origin: 350px 150px;
     }
 
-    /* CTA (OLD Styles) */
     .cta {
       padding: 100px 0;
       background: #F8FAFC;
@@ -1175,7 +922,6 @@ import { CommonModule } from '@angular/common';
       border-color: white;
     }
 
-    /* Footer (OLD Styles) */
     .footer {
       background: #0f172a;
       color: white;
@@ -1260,7 +1006,6 @@ import { CommonModule } from '@angular/common';
       font-style: italic;
     }
 
-    /* Responsive */
     @media (max-width: 1024px) {
       .hero-container {
         grid-template-columns: 1fr;
@@ -1280,10 +1025,6 @@ import { CommonModule } from '@angular/common';
       .trust-indicator {
         justify-content: center;
       }
-
-      .hero-visual {
-        display: none;
-      }
       
       .ai-content {
         grid-template-columns: 1fr;
@@ -1299,4 +1040,18 @@ import { CommonModule } from '@angular/common';
     }
   `]
 })
-export class LandingComponent { }
+export class LandingComponent {
+  isLoggedIn$: Observable<User | null>;
+
+  constructor(private auth: AuthService, private router: Router) {
+    this.isLoggedIn$ = this.auth.currentUser$;
+  }
+
+  onGetStarted(): void {
+    if (this.auth.getCurrentUser()) {
+      this.router.navigate(['/dashboard']);
+    } else {
+      this.router.navigate(['/register']);
+    }
+  }
+}

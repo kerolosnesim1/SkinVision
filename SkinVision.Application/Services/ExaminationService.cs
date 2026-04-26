@@ -28,9 +28,9 @@ public class ExaminationService : IExaminationService
         return MapToExaminationDto(examination);
     }
 
-    public async Task<List<ExaminationListItemDto>> GetExaminationsAsync(int? doctorId = null, string? searchQuery = null, string? riskLevel = null)
+    public async Task<List<ExaminationListItemDto>> GetExaminationsAsync(int? doctorId = null, string? searchQuery = null, string? riskLevel = null, DateOnly? date = null)
     {
-        var examinations = await _unitOfWork.Examinations.GetFilteredAsync(doctorId, searchQuery, riskLevel);
+        var examinations = await _unitOfWork.Examinations.GetFilteredAsync(doctorId, searchQuery, riskLevel, date);
         return examinations.Select(MapToExaminationListDto).ToList();
     }
 

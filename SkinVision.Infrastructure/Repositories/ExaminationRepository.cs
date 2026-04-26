@@ -21,7 +21,7 @@ public class ExaminationRepository : BaseRepository<Examination>, IExaminationRe
             .FirstOrDefaultAsync(e => e.DiagnosisId == id);
     }
 
-    public async Task<List<Examination>> GetFilteredAsync(int? doctorId, string? searchQuery, string? riskLevel)
+    public async Task<List<Examination>> GetFilteredAsync(int? doctorId, string? searchQuery, string? riskLevel, DateOnly? date = null)
     {
         var query = _context.Examinations.AsQueryable();
 
@@ -33,6 +33,9 @@ public class ExaminationRepository : BaseRepository<Examination>, IExaminationRe
 
         if (!string.IsNullOrWhiteSpace(riskLevel))
             query = query.Where(e => e.RiskLevel == riskLevel);
+
+        if (date.HasValue)
+            query = query.Where(e => DateOnly.FromDateTime(e.CreatedAt) == date.Value);
 
         return await query
             .OrderByDescending(e => e.CreatedAt)
