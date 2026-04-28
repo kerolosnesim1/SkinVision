@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { debounceTime, startWith, switchMap } from 'rxjs/operators';
 import { ExaminationService } from '../../services/examination.service';
 import { ExaminationListItem } from '../../models/models';
@@ -259,40 +259,33 @@ export class ExaminationsListComponent implements OnInit, OnDestroy {
 
   constructor(
     private examinationService: ExaminationService,
-    private reportService: ReportService
+    private reportService: ReportService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
-    console.log('[ExamsList] ngOnInit called');
-
     this.filterSubject
       .pipe(
         startWith(undefined),
         debounceTime(300),
         switchMap(() => {
-          console.log('[ExamsList] switchMap firing — searchQuery:', this.searchQuery, 'filterRisk:', this.filterRisk, 'filterDate:', this.filterDate);
           return this.examinationService.getExaminations(
             this.searchQuery || undefined,
             this.filterRisk || undefined,
             this.filterDate || undefined
           );
         }),
-        // takeUntil ensures the subscription is cleaned up when component is destroyed
-        // (using destroy$ instead of filterSubject.complete() to avoid completing the source)
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: (list) => {
-          console.log('[ExamsList] Received list count:', list.length);
-          if (list.length > 0) {
-            console.log('[ExamsList] First item keys:', Object.keys(list[0]));
-            console.log('[ExamsList] First item raw:', JSON.stringify(list[0]));
-          }
           this.filteredExaminations = list;
           this.errorMessage = '';
+          this.cdr.detectChanges();
         },
-        error: (error) => {
-          console.error('[ExamsList] Failed to load examinations — SUBSCRIPTION IS NOW DEAD:', error);
+        error: () => {
           this.errorMessage = 'Failed to load examinations.';
+          this.cdr.detectChanges();
         }
       });
   }
@@ -329,7 +322,6 @@ export class ExaminationsListComponent implements OnInit, OnDestroy {
           this.showToast('Report downloaded');
         },
         error: (error) => {
-          console.error('Failed to download report:', error);
           this.showToast('Failed to generate/download report');
         }
       });

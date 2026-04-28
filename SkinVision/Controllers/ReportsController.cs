@@ -17,7 +17,7 @@ public class ReportsController : BaseApiController
         _env = env;
     }
 
-    
+
     [HttpGet]
     public async Task<IActionResult> GetAllReports()
     {
@@ -29,7 +29,7 @@ public class ReportsController : BaseApiController
         return Ok(reports);
     }
 
-    
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetReport(int id)
     {
@@ -44,7 +44,7 @@ public class ReportsController : BaseApiController
         return Ok(report);
     }
 
-    
+
     [HttpPost("/api/examinations/{examinationId}/reports")]
     public async Task<IActionResult> GenerateReport(int examinationId, [FromBody] GenerateReportDto? dto)
     {
@@ -107,7 +107,7 @@ public class ReportsController : BaseApiController
         return File(fileBytes, "application/pdf", fileName);
     }
 
-  
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteReport(int id)
     {
