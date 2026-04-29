@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ExaminationService } from '../../services/examination.service';
 import { ReportService } from '../../services/report.service';
 import { Examination, Report, DoctorProfile } from '../../models/models';
 import { environment } from '../../../environments/environment';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-view-examination',
@@ -496,7 +497,7 @@ import { environment } from '../../../environments/environment';
     }
   `]
 })
-export class ViewExaminationComponent implements OnInit {
+export class ViewExaminationComponent implements OnInit, OnDestroy {
   examId: string = '';
   exam: Examination | null = null;
   doctorProfile: DoctorProfile | null = null;
@@ -504,11 +505,13 @@ export class ViewExaminationComponent implements OnInit {
   private pdfBusy = false;
   errorMessage = '';
   toastMessage = '';
+  private destroy$ = new Subject<void>();
 
   constructor(
     private route: ActivatedRoute,
     private examinationService: ExaminationService,
-    private reportService: ReportService
+    private reportService: ReportService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -517,23 +520,39 @@ export class ViewExaminationComponent implements OnInit {
     this.loadReports();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   loadExamination() {
-    this.examinationService.getExamination(+this.examId).subscribe({
-      next: (exam) => {
-        this.exam = exam;
-      },
-      error: (err) => {
-        this.errorMessage = 'Failed to load examination.';
-        console.error(err);
-      }
-    });
+    this.examinationService.getExamination(+this.examId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (exam) => {
+          this.exam = exam;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.errorMessage = 'Failed to load examination.';
+          this.cdr.detectChanges()
+        }
+      });
   }
 
   loadReports() {
-    this.reportService.getReportsForExamination(+this.examId).subscribe({
-      next: (reports) => this.reports = reports,
-      error: (err) => console.error('Failed to load reports', err)
-    });
+    this.reportService.getReportsForExamination(+this.examId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (reports) => {
+          this.reports = reports;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.errorMessage = 'Failed to load reports.';
+          this.cdr.detectChanges()
+        }
+      });
   }
 
   generateAndDownloadPDF() {
@@ -541,28 +560,32 @@ export class ViewExaminationComponent implements OnInit {
       return;
     }
     this.pdfBusy = true;
-    this.reportService.generateReport(+this.examId).subscribe({
-      next: (report) => {
-        this.reports.unshift(report);
-        this.showToast('Report generated successfully!');
+    this.reportService.generateReport(+this.examId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (report) => {
+          this.reports.unshift(report);
+          this.showToast('Report generated successfully!');
 
-        this.reportService.downloadReport(report.reportId).subscribe({
-          next: (blob) => {
-            this.triggerDownload(blob, `${report.title || 'Report'}.pdf`);
-            this.pdfBusy = false;
-          },
-          error: () => {
-            this.showToast('Report created but download failed. Try from the list below.');
-            this.pdfBusy = false;
-          }
-        });
-      },
-      error: (err) => {
-        this.showToast('Failed to generate report. Please try again.');
-        this.pdfBusy = false;
-        console.error(err);
-      }
-    });
+          this.reportService.downloadReport(report.reportId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (blob) => {
+                this.triggerDownload(blob, `${report.title || 'Report'}.pdf`);
+                this.pdfBusy = false;
+              },
+              error: () => {
+                this.showToast('Report created but download failed. Try from the list below.');
+                this.pdfBusy = false;
+              }
+            });
+        },
+        error: (err) => {
+          this.showToast('Failed to generate report. Please try again.');
+          this.pdfBusy = false;
+          console.error(err);
+        }
+      });
   }
 
   downloadExistingReport(report: Report) {

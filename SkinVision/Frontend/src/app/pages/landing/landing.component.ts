@@ -11,7 +11,6 @@ import { User } from '../../models/models';
   imports: [RouterLink, CommonModule],
   template: `
     <section class="hero">
-      <div class="hero-bg-accent"></div>
       <div class="container hero-container">
         <div class="hero-content">
           <div class="badge-wrapper">
@@ -359,6 +358,8 @@ import { User } from '../../models/models';
       --white: #FFFFFF;
       --glass-bg: rgba(255, 255, 255, 0.9);
       --glass-border: rgba(255, 255, 255, 0.2);
+      /* Flat hero bg — midpoint of former #F8FAFC → #FFFFFF gradient; match raster exports to this */
+      --hero-bg: #FCFDFE;
     }
 
     .container {
@@ -400,17 +401,7 @@ import { User } from '../../models/models';
       align-items: center;
       padding: 120px 0 80px;
       overflow: hidden;
-      background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
-    }
-
-    .hero-bg-accent {
-      position: absolute;
-      top: -20%;
-      right: -10%;
-      width: 800px;
-      height: 800px;
-      background: radial-gradient(circle, rgba(43, 177, 184, 0.08) 0%, transparent 70%);
-      pointer-events: none;
+      background: var(--hero-bg);
     }
 
     .hero-container {
@@ -565,19 +556,14 @@ import { User } from '../../models/models';
     }
 
     .hero-image-frame {
-      width: 100%;
-      max-width: 560px;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow:
-        0 20px 50px rgba(0, 0, 0, 0.1),
-        0 0 0 1px rgba(0, 0, 0, 0.05);
+      width: 200%;
+      max-width: 1000px;
       line-height: 0;
     }
 
     .hero-image-frame img {
       display: block;
-      max-width: 100%;
+      max-width: 120%;
       height: auto;
     }
 
