@@ -8,9 +8,12 @@ using SkinVision.Extensions;
 using SkinVision.Infrastructure.Context;
 using SkinVision.Infrastructure.InfraServices;
 using SkinVision.Infrastructure.Repositories;
+using SkinVision.ExceptionHandling;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -33,7 +36,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
     };
 });
-
 // Register Unit of Work (Infrastructure)
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -59,6 +61,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSkinVisionSwagger();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
@@ -72,6 +75,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
+
+app.UseExceptionHandler();
 
 app.UseAuthentication();
 

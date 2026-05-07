@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace SkinVision.Application.DTOs;
 
 public class ReportDto
@@ -12,5 +14,6 @@ public class ReportDto
 
 public class GenerateReportDto
 {
+    [StringLength(200, MinimumLength = 1, ErrorMessage = "Title must be between 1 and 200 characters when provided.")]
     public string? Title { get; set; }
 }
