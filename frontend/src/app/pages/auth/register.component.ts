@@ -17,6 +17,8 @@ import { AuthService } from '../../services/auth.service';
           <p>Register to start using SkinVision</p>
         </div>
 
+        <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+
         <form (ngSubmit)="onSubmit()">
           <div class="form-group">
             <label>Full Name</label>
@@ -41,6 +43,9 @@ import { AuthService } from '../../services/auth.service';
               <label>Password</label>
               <input type="password" [(ngModel)]="form.password" name="password" 
                      placeholder="Create password" required>
+              <small class="field-hint">
+                At least 8 characters with uppercase, lowercase, number, and special character.
+              </small>
             </div>
             <div class="form-group">
               <label>Confirm</label>
@@ -135,6 +140,24 @@ import { AuthService } from '../../services/auth.service';
       border-color: #167D7E;
     }
 
+    .field-hint {
+      display: block;
+      margin-top: 6px;
+      color: #666;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .error-message {
+      background: #ffebee;
+      color: #c62828;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      text-align: center;
+    }
+
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -191,6 +214,10 @@ import { AuthService } from '../../services/auth.service';
   `]
 })
 export class RegisterComponent {
+  private readonly passwordPattern =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,}$/;
+  errorMessage = '';
+
   form = {
     fullName: '',
     email: '',
@@ -212,35 +239,64 @@ export class RegisterComponent {
            this.form.phone.trim() !== '' &&
            this.form.password.trim() !== '' &&
            this.form.password === this.form.confirmPassword &&
+           this.passwordPattern.test(this.form.password) &&
            this.form.clinicName.trim() !== '' &&
            this.form.clinicAddress.trim() !== '';
   }
 
-  onSubmit() {
-    if (!this.isValid()) {
-      alert('Please fill all fields correctly');
+  onSubmit(): void {
+    this.errorMessage = '';
+    if (!this.form.fullName.trim() ||
+        !this.form.email.trim() ||
+        !this.form.phone.trim() ||
+        !this.form.password.trim() ||
+        !this.form.clinicName.trim() ||
+        !this.form.clinicAddress.trim()) {
+      this.errorMessage = 'Please fill all required fields.';
+      return;
+    }
+    if (!this.passwordPattern.test(this.form.password)) {
+      this.errorMessage =
+        'Password must be at least 8 characters and contain uppercase, lowercase, number, and special character.';
+      return;
+    }
+    if (this.form.password !== this.form.confirmPassword) {
+      this.errorMessage = 'Passwords do not match.';
       return;
     }
 
     this.auth.register(this.form).subscribe({
       next: () => {
-        alert('Account created successfully!');
         this.router.navigate(['/dashboard']);
       },
       error: (err: unknown) => {
-        let message = 'Could not create account.';
-        if (err instanceof HttpErrorResponse) {
-          if (err.status === 0) {
-            message =
-              'Cannot reach the API.';
-          } else if (typeof err.error === 'object' && err.error && 'message' in err.error) {
-            message = String((err.error as { message: string }).message);
-          } else if (err.message) {
-            message = err.message;
-          }
-        }
-        alert(message);
+        this.errorMessage = this.httpErrorMessage(err, 'Could not create account.');
       }
     });
+  }
+
+  private httpErrorMessage(err: unknown, fallback: string): string {
+    if (err instanceof HttpErrorResponse) {
+      if (err.status === 0) {
+        return 'Cannot reach the API.';
+      }
+      if (typeof err.error === 'object' && err.error) {
+        if ('message' in err.error) {
+          return String((err.error as { message: string }).message);
+        }
+        if ('errors' in err.error) {
+          const validationErrors = Object.values(
+            (err.error as { errors: Record<string, string[]> }).errors
+          ).flat();
+          if (validationErrors.length > 0) {
+            return validationErrors.join(' ');
+          }
+        }
+      }
+      if (err.message) {
+        return err.message;
+      }
+    }
+    return fallback;
   }
 }

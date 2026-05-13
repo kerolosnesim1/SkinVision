@@ -13,7 +13,7 @@ public class AuthDtoValidationTests
         var dto = new LoginRequestDto
         {
             Email = "doctor@example.com",
-            Password = "Password1!"
+            Password = "any-existing-password"
         };
 
         // Act
@@ -47,13 +47,17 @@ public class AuthDtoValidationTests
     [InlineData("password1!")]
     [InlineData("PASSWORD1!")]
     [InlineData("Password!")]
-    public void LoginRequestDto_WithInvalidPassword_ShouldFailValidation(string password)
+    public void RegisterRequestDto_WithInvalidPassword_ShouldFailValidation(string password)
     {
         // Arrange
-        var dto = new LoginRequestDto
+        var dto = new RegisterRequestDto
         {
             Email = "doctor@example.com",
-            Password = password
+            Password = password,
+            FullName = "Doctor Example",
+            ClinicName = "Skin Clinic",
+            ClinicAddress = "123 Medical Center",
+            Phone = "01012345678"
         };
 
         // Act
@@ -61,7 +65,28 @@ public class AuthDtoValidationTests
 
         // Assert
         Assert.Contains(results, result =>
-            result.MemberNames.Contains(nameof(LoginRequestDto.Password)));
+            result.MemberNames.Contains(nameof(RegisterRequestDto.Password)));
+    }
+
+    [Fact]
+    public void RegisterRequestDto_WithValidPasswordUsingHashSpecialCharacter_ShouldPassValidation()
+    {
+        // Arrange
+        var dto = new RegisterRequestDto
+        {
+            FullName = "Doctor Example",
+            Email = "doctor@example.com",
+            Password = "Password1#",
+            ClinicName = "Skin Clinic",
+            ClinicAddress = "123 Medical Center",
+            Phone = "01012345678"
+        };
+
+        // Act
+        var results = Validate(dto);
+
+        // Assert
+        Assert.Empty(results);
     }
 
 

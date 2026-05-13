@@ -3,14 +3,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SkinVision.Application.DTOs;
 
+public static class PasswordValidation
+{
+    public const string Pattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,}$";
+    public const string ErrorMessage = "Password must be at least 8 characters and contain uppercase, lowercase, number, and special character.";
+}
+
 public class LoginRequestDto
 {
     [Required,EmailAddress]
     public string Email { get; set; } = null!;
 
     [Required]
-    [MinLength(8, ErrorMessage = "Password must be at least 8 characters long.")]
-    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", ErrorMessage = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character.")]
     public string Password { get; set; } = null!;
 }
 
@@ -28,7 +32,7 @@ public class RegisterRequestDto
     public string Email { get; set; } = null!;
     [Required]
     [MinLength(8, ErrorMessage = "Password must be at least 8 characters long.")]
-    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", ErrorMessage = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character.")]
+    [RegularExpression(PasswordValidation.Pattern, ErrorMessage = PasswordValidation.ErrorMessage)]
     public string Password { get; set; } = null!;
     [Required]
     [StringLength(200)]
@@ -59,6 +63,6 @@ public class ResetPasswordWithTokenDto
     public string Token { get; set; } = null!;
     [Required]
     [MinLength(8, ErrorMessage = "Password must be at least 8 characters long.")]
-    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", ErrorMessage = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character.")]
+    [RegularExpression(PasswordValidation.Pattern, ErrorMessage = PasswordValidation.ErrorMessage)]
     public string NewPassword { get; set; } = null!;
 }

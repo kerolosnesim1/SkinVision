@@ -65,12 +65,19 @@ public class AuthService : IAuthService
         var user = await _unitOfWork.Users.FindByEmailWithProfileAsync(request.Email);
 
         if (user == null)
+        {
+            _logger.LogWarning("Login failed for unknown email");
             return null;
+        }
 
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        {
+            _logger.LogWarning("Login failed for user {UserId}", user.UserId);
             return null;
+        }
 
         var token = GenerateJwtToken(user);
+        _logger.LogInformation("User {UserId} logged in successfully", user.UserId);
 
         return new LoginResponseDto
         {

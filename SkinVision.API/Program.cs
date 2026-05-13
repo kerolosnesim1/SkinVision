@@ -10,8 +10,21 @@ using SkinVision.Infrastructure.InfraServices;
 using SkinVision.Infrastructure.Repositories;
 using SkinVision.ExceptionHandling;
 using System.Text;
+using Serilog;
+using Serilog.Events;
+using System.Diagnostics;
+using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext()
+        .WriteTo.Console(outputTemplate:
+            "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} {Message:lj} {Properties:j}{NewLine}{Exception}");
+});
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -76,7 +89,28 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
 
+app.Use(async (context, next) =>
+{
+    var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
+
+    using (LogContext.PushProperty("TraceId", traceId))
+    {
+        await next();
+    }
+});
+
 app.UseExceptionHandler();
+
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate =
+        "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+
+    options.GetLevel = (httpContext, _, exception) => exception is null
+        && httpContext.Response.StatusCode < StatusCodes.Status500InternalServerError
+            ? LogEventLevel.Information
+            : LogEventLevel.Error;
+});
 
 app.UseAuthentication();
 
