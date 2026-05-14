@@ -32,7 +32,10 @@ public class AuthService : IAuthService
     public async Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request)
     {
         if (await _unitOfWork.Users.FindByEmailWithProfileAsync(request.Email) != null)
+        {
+            _logger.LogWarning("Registration rejected for existing email");
             return null;
+        }
 
         var user = await _unitOfWork.Users.AddAsync(new User
         {
@@ -52,6 +55,8 @@ public class AuthService : IAuthService
         await _unitOfWork.SaveChangesAsync();
 
         var token = GenerateJwtToken(user);
+
+        _logger.LogInformation("Registered new {Role} user {UserId}", user.Role, user.UserId);
 
         return new RegisterResponseDto
         {
@@ -90,14 +95,23 @@ public class AuthService : IAuthService
     {
         var user = await _unitOfWork.Users.GetByIdAsync(userId);
         if (user == null)
+        {
+            _logger.LogWarning("Password change failed for missing user {UserId}", userId);
             return false;
+        }
+            
 
         if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+        {
+            _logger.LogWarning("Password change rejected for user {UserId}", userId);
             return false;
+        }
+            
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         await _unitOfWork.Users.UpdateAsync(user);
         await _unitOfWork.SaveChangesAsync();
+        _logger.LogInformation("Password changed successfully for user {UserId}", userId);
         return true;
     }
 
@@ -114,9 +128,10 @@ public class AuthService : IAuthService
         await _unitOfWork.Users.UpdateAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
-        var baseUrl = _configuration["Frontend:BaseUrl"]?.TrimEnd('/') ?? "http://localhost:4200";
-        var link = $"{baseUrl}/reset-password?token={Uri.EscapeDataString(token)}";
-        _logger.LogInformation("Password reset for {Email}. Reset link: {ResetLink}", user.Email, link);
+        _logger.LogInformation(
+            "Password reset token generated for user {UserId}; expires at {ExpiresAtUtc}",
+            user.UserId,
+            user.PasswordResetTokenExpires);
     }
 
     public async Task<(bool Success, string? ErrorMessage)> ResetPasswordWithTokenAsync(ResetPasswordWithTokenDto request)
@@ -128,13 +143,17 @@ public class AuthService : IAuthService
         if (user == null
             || user.PasswordResetTokenExpires == null
             || user.PasswordResetTokenExpires < DateTime.UtcNow)
+        {
+            _logger.LogWarning("Invalid or expired password reset token used");
             return (false, "Invalid or expired reset link. Please request a new one.");
+        }
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.PasswordResetToken = null;
         user.PasswordResetTokenExpires = null;
         await _unitOfWork.Users.UpdateAsync(user);
         await _unitOfWork.SaveChangesAsync();
+        _logger.LogInformation("Password reset completed for user {UserId}", user.UserId);
         return (true, null);
     }
 

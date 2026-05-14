@@ -4,5 +4,5 @@ namespace SkinVision.Application.Interfaces.Services;
 
 public interface IImageService
 {
-    Task<ImageDto?> AddImageAsync(int doctorId, int examinationId, Stream fileStream, string fileName, string? bodyPart, long fileSizeBytes);
+    Task<ImageDto?> AddImageAsync(int doctorId, int examinationId, Stream fileStream, string fileName, string contentType, string? bodyPart, long fileSizeBytes);
 }

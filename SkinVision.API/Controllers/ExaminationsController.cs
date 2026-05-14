@@ -8,6 +8,15 @@ namespace SkinVision.Controllers;
 [Authorize(Roles = nameof(Domain.Enums.UserRole.Doctor))]
 public class ExaminationsController : BaseApiController
 {
+    private const long MaxImageFileSizeBytes = 10 * 1024 * 1024;
+    private static readonly IReadOnlyDictionary<string, string[]> AllowedImageExtensionsByContentType =
+        new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["image/jpeg"] = [".jpg", ".jpeg"],
+            ["image/png"] = [".png"],
+            ["image/webp"] = [".webp"]
+        };
+
     private readonly IExaminationService _examinationService;
     private readonly IImageService _imageService;
 
@@ -65,11 +74,25 @@ public class ExaminationsController : BaseApiController
         if (file == null || file.Length == 0)
             return BadRequest("No file uploaded.");
 
+        if (file.Length > MaxImageFileSizeBytes)
+            return BadRequest("Image must not exceed 10 MB.");
+
+        if (!AllowedImageExtensionsByContentType.TryGetValue(file.ContentType, out var allowedExtensions))
+            return BadRequest("Unsupported image type. Only JPEG, PNG, and WebP images are allowed.");
+
+        var extension = Path.GetExtension(file.FileName);
+        if (string.IsNullOrWhiteSpace(extension)
+            || !allowedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
+        {
+            return BadRequest("Image file extension does not match the uploaded content type.");
+        }
+
         var result = await _imageService.AddImageAsync(
             doctorId.Value,
             id,
             file.OpenReadStream(),
             file.FileName,
+            file.ContentType,
             bodyPart,
             file.Length);
         if (result == null)

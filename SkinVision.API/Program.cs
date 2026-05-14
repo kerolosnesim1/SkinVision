@@ -14,6 +14,7 @@ using Serilog;
 using Serilog.Events;
 using System.Diagnostics;
 using Serilog.Context;
+using Serilog.Formatting.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,14 @@ builder.Host.UseSerilog((context, loggerConfiguration) =>
         .Enrich.FromLogContext()
         .WriteTo.Console(outputTemplate:
             "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} {Message:lj} {Properties:j}{NewLine}{Exception}");
+
+    if (!context.HostingEnvironment.IsDevelopment())
+    {
+        loggerConfiguration.WriteTo.File(
+            path: "logs/skinvision-.json",
+            rollingInterval: RollingInterval.Day,
+            formatter: new JsonFormatter());
+    }
 });
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();

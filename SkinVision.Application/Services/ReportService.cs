@@ -2,6 +2,7 @@ using SkinVision.Application.DTOs;
 using SkinVision.Application.Interfaces.Repositories;
 using SkinVision.Application.Interfaces.Services;
 using SkinVision.Domain.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace SkinVision.Application.Services;
 
@@ -10,19 +11,26 @@ public class ReportService : IReportService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IReportGeneratorService _reportGenerator;
     private readonly IFileStorageService _fileStorage;
+    private readonly ILogger<ReportService> _logger;
 
-    public ReportService(IUnitOfWork unitOfWork,IReportGeneratorService reportGenerator,IFileStorageService fileStorage)
+    public ReportService(IUnitOfWork unitOfWork,IReportGeneratorService reportGenerator,IFileStorageService fileStorage,ILogger<ReportService>logger)
     {
         _unitOfWork = unitOfWork;
         _reportGenerator = reportGenerator;
         _fileStorage = fileStorage;
+        _logger = logger;
     }
 
     public async Task<ReportDto> GenerateReportAsync(int doctorId, int examinationId, GenerateReportDto? dto)
     {
         var examination = await _unitOfWork.Examinations.GetByIdWithDetailsAsync(examinationId);
         if (examination == null || examination.DoctorId != doctorId)
+        {
+            _logger.LogWarning("Report generation failed for doctor {DoctorId} and examination {ExaminationId}",
+                doctorId,
+                examinationId);
             throw new InvalidOperationException("Examination not found or access denied.");
+        }
 
         // Generate the PDF
         using var pdfStream = await _reportGenerator.GeneratePdfAsync(examination);
@@ -43,6 +51,11 @@ public class ReportService : IReportService
 
         await _unitOfWork.Reports.AddAsync(report);
         await _unitOfWork.SaveChangesAsync();
+        _logger.LogInformation(
+              "Report {ReportId} generated for examination {ExaminationId} by doctor {DoctorId}",
+              report.ReportId,
+              examinationId,
+              doctorId);
 
         return MapToDto(report);
     }
