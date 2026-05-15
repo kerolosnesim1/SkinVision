@@ -159,36 +159,56 @@ import { User } from '../../models/models';
     </section>
 
     <section class="ai-section">
-      <div class="container">
-        <div class="ai-content">
-          <div class="ai-text">
-            <span class="section-tag">AI Technology</span>
-            <h2>Powered by Deep Learning</h2>
-            <p>Our AI model is trained on dermatological images to assist in identifying common skin conditions. It serves as a supportive tool for your clinical expertise.</p>
-            <ul class="ai-list">
-              <li>
-                <span class="check">✓</span>
-                Trained on diverse dermatological dataset
-              </li>
-              <li>
-                <span class="check">✓</span>
-                Identifies 7+ common skin conditions
-              </li>
-              <li>
-                <span class="check">✓</span>
-                Continuous learning and improvement
-              </li>
-              <li>
-                <span class="check">✓</span>
-                Advisory tool - supports your diagnosis
-              </li>
-            </ul>         
+  <div class="container">
+    <div class="ai-content">
 
-              
-          </div>
+      <div class="ai-text">
+        <span class="section-tag">AI Technology</span>
+
+        <h2>Powered by Deep Learning</h2>
+
+        <p>
+          Our AI model is trained on dermatological images to assist in
+          identifying common skin conditions. It serves as a supportive
+          tool for your clinical expertise.
+        </p>
+
+        <ul class="ai-list">
+          <li>
+            <span class="check">✓</span>
+            Trained on diverse dermatological dataset
+          </li>
+
+          <li>
+            <span class="check">✓</span>
+            Identifies 7+ common skin conditions
+          </li>
+
+          <li>
+            <span class="check">✓</span>
+            Continuous learning and improvement
+          </li>
+
+          <li>
+            <span class="check">✓</span>
+            Advisory tool - supports your diagnosis
+          </li>
+        </ul>
+      </div>
+
+      <div class="ai-visual">
+        <div class="ai-image-wrapper">
+          <img
+            src="/assets/images/AiSection.webp"
+            alt="Deep learning dermatology heatmap visualization"
+            loading="lazy"
+          />
         </div>
       </div>
-    </section>
+
+    </div>
+  </div>
+</section>
 
     <section class="cta">
       <div class="container">
@@ -573,6 +593,58 @@ import { User } from '../../models/models';
       opacity: 0.3;
     }
 
+    .ai-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-image-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 620px;
+}
+
+.ai-image-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(
+    circle,
+    rgba(43, 177, 184, 0.12) 0%,
+    rgba(22, 125, 126, 0.08) 35%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  z-index: 0;
+}
+
+.ai-image-wrapper img {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: auto;
+  display: block;
+
+  border-radius: 24px;
+
+  background: #FCFDFE;
+
+  box-shadow:
+    0 30px 60px rgba(22, 125, 126, 0.12),
+    0 10px 25px rgba(22, 125, 126, 0.08);
+
+  transition: transform 0.4s ease,
+              box-shadow 0.4s ease;
+}
+
+.ai-image-wrapper img:hover {
+  transform: translateY(-6px) scale(1.01);
+
+  box-shadow:
+    0 40px 80px rgba(22, 125, 126, 0.18),
+    0 15px 35px rgba(22, 125, 126, 0.12);
+}
     .ai-section {
       padding: 100px 0;
       background: white;

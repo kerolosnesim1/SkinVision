@@ -1,0 +1,8 @@
+numpy>=1.24
+torch>=2.0
+torchvision>=0.15
+efficientnet-pytorch>=0.7
+fastapi>=0.100
+uvicorn>=0.22
+pillow>=10.0
+python-multipart>=0.0.6

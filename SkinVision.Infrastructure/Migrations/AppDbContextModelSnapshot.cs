@@ -164,6 +164,39 @@ namespace SkinVision.Infrastructure.Migrations
                     b.ToTable("ExaminationImages");
                 });
 
+            modelBuilder.Entity("SkinVision.Domain.Entities.ExternalLogin", b =>
+                {
+                    b.Property<Guid>("ExternalLoginId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProviderEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProviderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProviderKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ExternalLoginId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ExternalLogins");
+                });
+
             modelBuilder.Entity("SkinVision.Domain.Entities.Log", b =>
                 {
                     b.Property<int>("LogId")
@@ -399,6 +432,17 @@ namespace SkinVision.Infrastructure.Migrations
                     b.Navigation("Examination");
                 });
 
+            modelBuilder.Entity("SkinVision.Domain.Entities.ExternalLogin", b =>
+                {
+                    b.HasOne("SkinVision.Domain.Entities.User", "User")
+                        .WithMany("ExternalLogins")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SkinVision.Domain.Entities.Log", b =>
                 {
                     b.HasOne("SkinVision.Domain.Entities.User", "User")
@@ -453,6 +497,8 @@ namespace SkinVision.Infrastructure.Migrations
                     b.Navigation("DoctorProfile");
 
                     b.Navigation("Examinations");
+
+                    b.Navigation("ExternalLogins");
                 });
 #pragma warning restore 612, 618
         }

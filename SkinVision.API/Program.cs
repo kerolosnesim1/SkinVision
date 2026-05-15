@@ -15,6 +15,8 @@ using Serilog.Events;
 using System.Diagnostics;
 using Serilog.Context;
 using Serilog.Formatting.Json;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +36,15 @@ builder.Host.UseSerilog((context, loggerConfiguration) =>
             formatter: new JsonFormatter());
     }
 });
+
+var Google = builder.Configuration.GetSection("Authentication:Google");
+builder.Services.AddAuthentication().
+    AddGoogle(options =>
+    {
+        options.ClientId = Google["ClientId"]!;
+        options.ClientSecret = Google["ClientSecret"]!;
+        options.CallbackPath = "/signin-google";
+    });
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -69,6 +80,12 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IReportGeneratorService, PdfReportGeneratorService>();
+builder.Services.AddHttpClient<IDlPredictionService, DlPredictionService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["DlService:BaseUrl"]!);
+    client.Timeout = TimeSpan.FromSeconds(
+        builder.Configuration.GetValue<int>("DlService:TimeoutSeconds", 30));
+});
 
 // Configure CORS for Angular frontend
 builder.Services.AddCors(options =>

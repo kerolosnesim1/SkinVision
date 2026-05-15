@@ -27,4 +27,5 @@ public partial class User
     public virtual DoctorProfile? DoctorProfile { get; set; }
 
     public virtual ICollection<Examination> Examinations { get; set; } = new List<Examination>();
+    public virtual ICollection<ExternalLogin> ExternalLogins { get; set; } = new List<ExternalLogin>();
 }

@@ -11,17 +11,20 @@ public class ImageService : IImageService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IExaminationService _examinationService;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IDlPredictionService _dlPredictionService;
     private readonly ILogger<ImageService> _logger;
 
     public ImageService(
        IUnitOfWork unitOfWork,
        IExaminationService examinationService,
        IFileStorageService fileStorageService,
+       IDlPredictionService dlPredictionService,
        ILogger<ImageService> logger)
     {
         _unitOfWork = unitOfWork;
         _examinationService = examinationService;
         _fileStorageService = fileStorageService;
+        _dlPredictionService = dlPredictionService;
         _logger = logger;
     }
 
@@ -37,8 +40,32 @@ public class ImageService : IImageService
             return null;
         }
 
-        var savedPath = await _fileStorageService.SaveFileAsync(fileStream, fileName, contentType);
+        await using var bufferedImage = new MemoryStream();
+        await fileStream.CopyToAsync(bufferedImage);
+        bufferedImage.Position = 0;
+
+        var savedPath = await _fileStorageService.SaveFileAsync(bufferedImage, fileName, contentType);
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
+
+        Prediction? aiResult = null;
+        try
+        {
+            bufferedImage.Position = 0;
+            aiResult = await _dlPredictionService.PredictAsync(
+                bufferedImage,
+                fileName,
+                exam.PatientAge,
+                "unknown",
+                bodyPart);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "DL prediction failed for examination {ExaminationId} and file {FileName}; continuing without AI result",
+                examinationId,
+                fileName);
+        }
 
         var newImage = new ExaminationImage
         {
@@ -47,8 +74,14 @@ public class ImageService : IImageService
             Format = extension,
             Size = fileSizeBytes,
             UploadDate = DateTime.UtcNow,
-            BodyPart = bodyPart
+            BodyPart = bodyPart,
+            AiResult = aiResult
         };
+
+        if (aiResult is not null)
+        {
+            aiResult.Image = newImage;
+        }
 
         await _unitOfWork.Images.AddAsync(newImage);
         await _unitOfWork.SaveChangesAsync();
@@ -65,7 +98,27 @@ public class ImageService : IImageService
             Format = newImage.Format,
             Size = newImage.Size,
             UploadDate = newImage.UploadDate,
-            BodyPart = newImage.BodyPart
+            PatientAge = exam.PatientAge,
+            ExaminationReason = exam.Reason,
+            BodyPart = newImage.BodyPart,
+            AiResult = aiResult is null ? null : MapToPredictionDto(aiResult)
+        };
+    }
+
+    private static PredictionDto MapToPredictionDto(Prediction prediction)
+    {
+        var findings = string.IsNullOrWhiteSpace(prediction.Findings)
+            ? new List<string>()
+            : new List<string> { prediction.Findings };
+
+        return new PredictionDto
+        {
+            PredictionId = prediction.PredictionId,
+            Classification = prediction.Classification,
+            ConfidenceScore = prediction.ConfidenceScore,
+            ModelVersion = prediction.ModelVersion,
+            CreatedAt = prediction.CreatedAt,
+            Findings = findings
         };
     }
 }
