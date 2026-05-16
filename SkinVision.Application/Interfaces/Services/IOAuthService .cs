@@ -1,8 +1,10 @@
-﻿using System;
+using SkinVision.Application.DTOs;
+
+namespace SkinVision.Application.Interfaces.Services;
 
 public interface IOAuthService
 {
-    Task<LoginResponseDto?> HandleExternalLoginAsync(string provider, string providerUserId, string email, string name);
+    Task<ExternalLoginResponseDto> HandleExternalLoginAsync(string provider, string providerUserId, string email, string name);
 
     Task<bool> LinkExternalLoginAsync(int userId, string provider, string providerUserId, string email);
 }

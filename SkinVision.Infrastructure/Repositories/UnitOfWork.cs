@@ -12,6 +12,7 @@ public class UnitOfWork : IUnitOfWork
     private IImageRepository? _images;
     private IDoctorProfileRepository? _doctorProfiles;
     private IReportRepository? _reports;
+    private IExternalLoginRepository? _externalLogins;
 
     public UnitOfWork(AppDbContext context)
     {
@@ -33,6 +34,9 @@ public class UnitOfWork : IUnitOfWork
     public IReportRepository Reports =>
         _reports ??= new ReportRepository(_context);
 
+    public IExternalLoginRepository ExternalLogins =>
+        _externalLogins ??= new ExternalLoginRepository(_context);
+
     public async Task<int> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync();
@@ -48,3 +52,4 @@ public class UnitOfWork : IUnitOfWork
         throw new NotImplementedException();
     }
 }
+

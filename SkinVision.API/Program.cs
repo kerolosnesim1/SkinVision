@@ -15,8 +15,7 @@ using Serilog.Events;
 using System.Diagnostics;
 using Serilog.Context;
 using Serilog.Formatting.Json;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,14 +36,7 @@ builder.Host.UseSerilog((context, loggerConfiguration) =>
     }
 });
 
-var Google = builder.Configuration.GetSection("Authentication:Google");
-builder.Services.AddAuthentication().
-    AddGoogle(options =>
-    {
-        options.ClientId = Google["ClientId"]!;
-        options.ClientSecret = Google["ClientSecret"]!;
-        options.CallbackPath = "/signin-google";
-    });
+
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -55,20 +47,33 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+var googleConfig = builder.Configuration.GetSection("Authentication:Google");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidateAudience = true,
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
-    };
-});
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    })
+    .AddCookie("ExternalCookies", options =>
+    {
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+    })
+    .AddGoogle(options =>
+    {
+        options.ClientId = googleConfig["ClientId"]!;
+        options.ClientSecret = googleConfig["ClientSecret"]!;
+        options.CallbackPath = "/signin-google";
+        options.SignInScheme = "ExternalCookies";
+    });
 // Register Unit of Work (Infrastructure)
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -80,6 +85,7 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IReportGeneratorService, PdfReportGeneratorService>();
+builder.Services.AddScoped<IOAuthService, GoogleOAuthService>();
 builder.Services.AddHttpClient<IDlPredictionService, DlPredictionService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["DlService:BaseUrl"]!);

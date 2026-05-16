@@ -25,7 +25,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsUnique();
 
         builder.Property(u => u.PasswordHash)
-            .IsRequired();
+            .IsRequired(false);
 
         builder.Property(u => u.PasswordResetToken)
             .HasMaxLength(128);

@@ -47,5 +47,9 @@ export const routes: Routes = [
     canMatch: [authGuard],
     loadChildren: () => import('./pages/doctor/doctor.routes').then(m => m.DOCTOR_ROUTES)
   },
+  {
+    path: 'auth/callback',
+    loadComponent: () => import('./pages/auth/oauth-callback.component').then(m => m.OAuthCallbackComponent)
+  },
   { path: '**', redirectTo: '' }
 ];

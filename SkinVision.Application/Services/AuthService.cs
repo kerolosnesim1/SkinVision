@@ -75,6 +75,12 @@ public class AuthService : IAuthService
             return null;
         }
 
+        if (string.IsNullOrEmpty(user.PasswordHash))
+        {
+            _logger.LogWarning("Login failed for user {UserId}: no password set (OAuth-only account)", user.UserId);
+            return null;
+        }
+
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
             _logger.LogWarning("Login failed for user {UserId}", user.UserId);

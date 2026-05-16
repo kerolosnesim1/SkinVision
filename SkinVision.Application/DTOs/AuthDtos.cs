@@ -66,3 +66,13 @@ public class ResetPasswordWithTokenDto
     [RegularExpression(PasswordValidation.Pattern, ErrorMessage = PasswordValidation.ErrorMessage)]
     public string NewPassword { get; set; } = null!;
 }
+
+public class ExternalLoginResponseDto
+{
+    public string? Token { get; set; }
+    public UserDto? User { get; set; }
+    public bool IsNewUser { get; set; }
+    public bool RequiresLinking { get; set; }
+    public string? Message { get; set; }
+}
+

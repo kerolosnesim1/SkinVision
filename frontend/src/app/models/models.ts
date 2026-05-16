@@ -117,3 +117,13 @@ export interface Report {
     format?: string;
     createdAt?: Date;
 }
+
+// OAuth models
+export interface ExternalLoginResponse {
+    token: string;
+    user: User;
+    isNewUser: boolean;
+    requiresLinking: boolean;
+    message?: string;
+}
+

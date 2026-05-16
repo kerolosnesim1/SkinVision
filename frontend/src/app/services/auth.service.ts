@@ -10,6 +10,7 @@ import { LoginRequest, LoginResponse, User } from '../models/models';
 })
 export class AuthService {
     private apiUrl = `${environment.apiUrl}/auth`;
+    private oauthApiUrl = `${environment.apiUrl}/oauth`;
     private currentUserSubject = new BehaviorSubject<User | null>(null);
     public currentUser$ = this.currentUserSubject.asObservable();
 
@@ -51,6 +52,28 @@ export class AuthService {
                 this.currentUserSubject.next(response.user);
             })
         );
+    }
+
+    /** Redirects the browser to the backend Google OAuth endpoint */
+    googleLogin(): void {
+        window.location.href = `${this.oauthApiUrl}/google-login`;
+    }
+
+    /** Stores OAuth callback data (called by the callback component) */
+    handleOAuthCallback(token: string, user: User): void {
+        localStorage.setItem('token', token);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        this.currentUserSubject.next(user);
+    }
+
+    /** Initiates Google account linking via redirect */
+    linkGoogle(): void {
+        window.location.href = `${this.oauthApiUrl}/link-google`;
+    }
+
+    /** Unlinks Google account from the current user */
+    unlinkGoogle(): Observable<{ message: string }> {
+        return this.http.delete<{ message: string }>(`${this.oauthApiUrl}/unlink-google`);
     }
 
     logout(): void {

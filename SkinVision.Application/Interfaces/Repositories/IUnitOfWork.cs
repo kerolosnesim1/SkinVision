@@ -8,6 +8,7 @@ public interface IUnitOfWork : IDisposable
     IImageRepository Images { get; }
     IDoctorProfileRepository DoctorProfiles { get; }
     IReportRepository Reports { get; }
+    IExternalLoginRepository ExternalLogins { get; }
 
     Task<int> SaveChangesAsync();
 }
