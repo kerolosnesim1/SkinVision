@@ -55,9 +55,11 @@ The goal is to demonstrate how modern healthcare AI systems can be engineered re
 
 # Demo
 
-> Demo video coming soon — full workflow walkthrough:
->
-> authentication → examination creation → image upload → AI classification → diagnosis → PDF report generation
+<h2>🎥 Demo Video</h2>
+
+<video width="100%" controls>
+  <source src="assets/videos/demo.mp4" type="video/mp4">
+</video>
 
 <p align="center">
   <img src="assets/screenshots/dashboard.png" alt="Dashboard" width="85%" />
@@ -74,39 +76,6 @@ The goal is to demonstrate how modern healthcare AI systems can be engineered re
 </details>
 
 ---
-
-# Highlights
-
-## AI & Medical Workflow
-
-- Multimodal EfficientNet-B3 lesion classification
-- AI-assisted examination workflow
-- Professional PDF medical report generation
-- Fault-tolerant AI processing pipeline
-- Medical record traceability and auditability
-
-## Security
-
-- JWT authentication with role-based authorization
-- BCrypt password hashing
-- Doctor-scoped resource access
-- IDOR-safe examination ownership validation
-- Secure file upload handling
-
-## Infrastructure & Backend
-
-- Clean Architecture with strict layer separation
-- Independent FastAPI/PyTorch ML microservice
-- Azure Blob Storage-ready abstraction layer
-- Async end-to-end API pipeline
-- Structured logging with Serilog
-
-## Performance
-
-- Optimized image preprocessing pipeline
-- Lightweight inference using `torch.no_grad()`
-- SQL-level filtering and optimized querying
-- Storage architecture prepared for scaling
 
 ---
 
@@ -154,8 +123,6 @@ to improve classification quality beyond image-only inference.
 | VASC | Vascular Lesion |
 | SCC | Squamous Cell Carcinoma |
 
-> AI predictions are advisory only and do not replace clinical diagnosis.
-
 ---
 
 # Architecture
@@ -172,8 +139,6 @@ The backend follows **Clean Architecture** — dependencies point inward, and no
 ---
 
 ## System Architecture Diagram
-
-> Add your Excalidraw architecture diagram here.
 
 <p align="center">
   <img src="assets/diagrams/system-architecture.png" alt="System Architecture" width="95%" />
@@ -277,6 +242,8 @@ SkinVision/
 │   ├── Repositories/
 │   ├── Services/
 │   └── Migrations/
+SkinVision.Application.Test/
+│   └── ServicesTests.cs/        # Planned
 ├── SkinVision.ML/
 │   ├── app/
 │   │   ├── main.py
@@ -433,7 +400,6 @@ http://localhost:4200
 
 - [ ] Azure Blob Storage integration
 - [ ] Redis caching
-- [ ] Kubernetes deployment
 - [ ] Dockerized multi-container deployment
 - [ ] Background job processing
 - [ ] AI confidence thresholding
