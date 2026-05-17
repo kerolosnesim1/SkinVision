@@ -52,20 +52,13 @@ Instead of focusing only on machine learning accuracy, the project emphasizes:
 The goal is to demonstrate how modern healthcare AI systems can be engineered responsibly — where AI assists clinicians without becoming a system dependency.
 
 ---
-
-# Demo
-
-<h2>🎥 Demo Video</h2>
-
-<video width="100%" controls>
-  <source src="assets/videos/demo.mp4" type="video/mp4">
-</video>
+<h2> Dashboard </h2>
 
 <p align="center">
   <img src="assets/screenshots/dashboard.png" alt="Dashboard" width="85%" />
 </p>
 
-<details>
+
 <summary>More screenshots</summary>
 <br>
 
@@ -73,9 +66,7 @@ The goal is to demonstrate how modern healthcare AI systems can be engineered re
 |:---:|:---:|:---:|
 | ![Dashboard](assets/screenshots/dashboard.png) | ![AI Result](assets/screenshots/ai-analysis.png) | ![Report](assets/screenshots/report.png) |
 
-</details>
 
----
 
 ---
 
