@@ -43,3 +43,5 @@ bld/
 # Publish profiles
 *.pubxml
 *.azurePubxml
+
+appsettings.Development.json
