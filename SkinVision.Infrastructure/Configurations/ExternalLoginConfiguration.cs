@@ -24,7 +24,6 @@ public class ExternalLoginConfiguration : IEntityTypeConfiguration<ExternalLogin
         builder.Property(e => e.CreatedAt)
             .HasDefaultValueSql("GETUTCDATE()");
 
-        // Prevent duplicate external logins for the same provider
         builder.HasIndex(e => new { e.Provider, e.ProviderUserId })
             .IsUnique();
 

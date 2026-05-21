@@ -165,7 +165,7 @@ public class GoogleOAuthService : IOAuthService
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, (user.Role ?? UserRole.Patient).ToString())
+            new Claim(ClaimTypes.Role, (user.Role ?? UserRole.Doctor).ToString())
         };
 
         var token = new JwtSecurityToken(

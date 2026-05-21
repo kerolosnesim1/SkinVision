@@ -24,6 +24,10 @@ public partial class User
 
     public DateTime? UpdatedAt { get; set; }
 
+    public bool IsActive { get; set; } = true;
+
+    public DateTime? LastLoginAt { get; set; }
+
     public virtual DoctorProfile? DoctorProfile { get; set; }
 
     public virtual ICollection<Examination> Examinations { get; set; } = new List<Examination>();

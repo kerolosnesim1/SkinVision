@@ -37,6 +37,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.CreatedAt)
             .HasDefaultValueSql("GETUTCDATE()");
 
+        builder.Property(u => u.IsActive)
+            .HasDefaultValue(true);
+
         builder.HasOne(u => u.DoctorProfile)
             .WithOne(d => d.Doctor)
             .HasForeignKey<DoctorProfile>(d => d.DoctorId)

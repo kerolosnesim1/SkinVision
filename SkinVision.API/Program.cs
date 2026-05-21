@@ -86,6 +86,7 @@ builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IReportGeneratorService, PdfReportGeneratorService>();
 builder.Services.AddScoped<IOAuthService, GoogleOAuthService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddHttpClient<IDlPredictionService, DlPredictionService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["DlService:BaseUrl"]!);
@@ -94,11 +95,12 @@ builder.Services.AddHttpClient<IDlPredictionService, DlPredictionService>(client
 });
 
 // Configure CORS for Angular frontend
+var frontendUrl = builder.Configuration["Frontend:BaseUrl"] ?? "http://localhost:4200";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins(frontendUrl)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -117,7 +119,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
 

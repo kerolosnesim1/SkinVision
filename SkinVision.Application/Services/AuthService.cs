@@ -75,6 +75,12 @@ public class AuthService : IAuthService
             return null;
         }
 
+        if (!user.IsActive)
+        {
+            _logger.LogWarning("Login failed for user {UserId}: account is deactivated", user.UserId);
+            return null;
+        }
+
         if (string.IsNullOrEmpty(user.PasswordHash))
         {
             _logger.LogWarning("Login failed for user {UserId}: no password set (OAuth-only account)", user.UserId);
@@ -86,6 +92,11 @@ public class AuthService : IAuthService
             _logger.LogWarning("Login failed for user {UserId}", user.UserId);
             return null;
         }
+
+        // Update last login timestamp
+        user.LastLoginAt = DateTime.UtcNow;
+        await _unitOfWork.Users.UpdateAsync(user);
+        await _unitOfWork.SaveChangesAsync();
 
         var token = GenerateJwtToken(user);
         _logger.LogInformation("User {UserId} logged in successfully", user.UserId);
@@ -207,7 +218,7 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, (user.Role ?? UserRole.Patient).ToString())
+            new Claim(ClaimTypes.Role, (user.Role ?? UserRole.Doctor).ToString())
         };
 
         var token = new JwtSecurityToken(

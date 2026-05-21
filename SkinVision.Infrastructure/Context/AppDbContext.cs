@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<Patient> Patients { get; set; }
     public DbSet<Log> Logs { get; set; }
     public DbSet<ExternalLogin> ExternalLogins { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
