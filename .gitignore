@@ -44,4 +44,7 @@ bld/
 *.pubxml
 *.azurePubxml
 
+# Environment-specific appsettings 
 appsettings.Development.json
+appsettings.Docker.json
+appsettings.Production.json

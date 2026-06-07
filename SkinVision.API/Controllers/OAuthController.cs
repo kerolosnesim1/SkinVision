@@ -1,8 +1,11 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using SkinVision.Application.Interfaces.Services;
 using SkinVision.Application.Interfaces.Repositories;
 
@@ -96,17 +99,34 @@ public class OAuthController : BaseApiController
     }
 
     /// <summary>
-    /// Links a Google account to the currently authenticated user.
-    /// The user must initiate Google sign-in first, then this endpoint processes the linking.
+    /// Initiates Google account linking. The JWT token must be passed as a query parameter
+    /// because this endpoint triggers a browser redirect (Challenge), which cannot carry
+    /// an Authorization header.
     /// </summary>
     [HttpGet("link-google")]
-    [Authorize]
-    public IActionResult LinkGoogle()
+    public IActionResult LinkGoogle([FromQuery] string? token)
     {
+        var frontendBaseUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:4200";
+
+        if (string.IsNullOrEmpty(token))
+        {
+            return Redirect($"{frontendBaseUrl}/auth/callback?error=missing_token");
+        }
+
+        var userId = ValidateTokenAndGetUserId(token);
+        if (userId == null)
+        {
+            return Redirect($"{frontendBaseUrl}/auth/callback?error=invalid_token");
+        }
+
         var properties = new AuthenticationProperties
         {
             RedirectUri = Url.Action(nameof(LinkGoogleCallback)),
-            Items = { { "scheme", GoogleDefaults.AuthenticationScheme } }
+            Items =
+            {
+                { "scheme", GoogleDefaults.AuthenticationScheme },
+                { "userId", userId.Value.ToString() }
+            }
         };
 
         return Challenge(properties, GoogleDefaults.AuthenticationScheme);
@@ -128,8 +148,9 @@ public class OAuthController : BaseApiController
                 return Redirect($"{frontendBaseUrl}/dashboard/profile?linkError=authentication_failed");
             }
 
-            var userId = GetCurrentUserId();
-            if (userId == null)
+            // Retrieve the userId that was stored in AuthenticationProperties by LinkGoogle
+            var userIdString = result.Properties?.Items["userId"];
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out var userId))
             {
                 return Redirect($"{frontendBaseUrl}/login?error=unauthorized");
             }
@@ -144,7 +165,7 @@ public class OAuthController : BaseApiController
             }
 
             var success = await _oAuthService.LinkExternalLoginAsync(
-                userId.Value, "Google", providerUserId, email);
+                userId, "Google", providerUserId, email);
 
             await HttpContext.SignOutAsync("ExternalCookies");
 
@@ -198,5 +219,42 @@ public class OAuthController : BaseApiController
         _logger.LogInformation("Unlinked Google account for user {UserId}", userId.Value);
 
         return Ok(new { message = "Google account unlinked successfully" });
+    }
+
+    /// <summary>
+    /// Validates a JWT token passed as a query parameter and extracts the user ID.
+    /// Used for the LinkGoogle flow where the token can't be sent as an Authorization header.
+    /// </summary>
+    private int? ValidateTokenAndGetUserId(string token)
+    {
+        var keyString = string.IsNullOrEmpty(_configuration["Jwt:Key"])
+            ? "SkinVision_Default_Secret_Key_2026!"
+            : _configuration["Jwt:Key"]!;
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
+
+        var handler = new JwtSecurityTokenHandler();
+        var parameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = _configuration["Jwt:Issuer"] ?? "SkinVision",
+            ValidateAudience = true,
+            ValidAudience = _configuration["Jwt:Audience"] ?? "SkinVision",
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = key
+        };
+
+        try
+        {
+            var principal = handler.ValidateToken(token, parameters, out _);
+            var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return int.TryParse(userIdClaim, out var id) ? id : null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Invalid JWT token provided for Google account linking");
+            return null;
+        }
     }
 }

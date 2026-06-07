@@ -60,7 +60,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                Encoding.UTF8.GetBytes(
+                    string.IsNullOrEmpty(builder.Configuration["Jwt:Key"])
+                        ? "SkinVision_Default_Secret_Key_2026!"
+                        : builder.Configuration["Jwt:Key"]!))
         };
     })
     .AddCookie("ExternalCookies", options =>
@@ -102,7 +105,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(frontendUrl)
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 

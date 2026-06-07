@@ -154,9 +154,10 @@ public class GoogleOAuthService : IOAuthService
 
     private string GenerateJwtToken(User user)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-            _configuration["Jwt:Key"] ?? "SkinVision_Default_Secret_Key_2026!"
-        ));
+        var keyString = string.IsNullOrEmpty(_configuration["Jwt:Key"])
+            ? "SkinVision_Default_Secret_Key_2026!"
+            : _configuration["Jwt:Key"]!;
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
 
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
