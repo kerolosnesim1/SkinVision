@@ -46,5 +46,28 @@ bld/
 
 # Environment-specific appsettings 
 appsettings.Development.json
-appsettings.Docker.json
 appsettings.Production.json
+
+# ML model files (too large for GitHub)
+*.pth
+*.joblib
+*.h5
+*.pkl
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# User-uploaded content (runtime-generated)
+SkinVision.API/wwwroot/uploads/images/
+SkinVision.API/wwwroot/uploads/reports/
+SkinVision.API/wwwroot/uploads/heatmaps/
+
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.idea/

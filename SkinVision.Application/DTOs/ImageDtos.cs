@@ -10,9 +10,10 @@ public class ImageDto
     public string? Format { get; set; }
     public long? Size { get; set; }
     public DateTime? UploadDate { get; set; }
-    public string? PatientName { get; set; } // Usually mapped from Examination
-    public int? PatientAge { get; set; } // Usually mapped from Examination
-    public string? ExaminationReason { get; set; } // Usually mapped
+    public string? PatientName { get; set; }
+    public int? PatientAge { get; set; }
+    public string? AnatomSite { get; set; }
+    public string? Sex { get; set; }
     public string? BodyPart { get; set; }
     public PredictionDto? AiResult { get; set; }
 }
@@ -25,4 +26,5 @@ public class PredictionDto
     public string? ModelVersion { get; set; }
     public DateTime? CreatedAt { get; set; }
     public List<string> Findings { get; set; } = new();
+    public string? HeatmapPath { get; set; }
 }

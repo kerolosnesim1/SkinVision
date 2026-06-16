@@ -18,15 +18,18 @@ public class AuthService : IAuthService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
+    private readonly IEmailService _emailService;
 
     public AuthService(
         IUnitOfWork unitOfWork,
         IConfiguration configuration,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger,
+        IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _configuration = configuration;
         _logger = logger;
+        _emailService = emailService;
     }
 
     public async Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request)
@@ -39,7 +42,7 @@ public class AuthService : IAuthService
 
         var user = await _unitOfWork.Users.AddAsync(new User
         {
-            Username = request.FullName,
+            Username = request.Email,
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             Role = UserRole.Doctor,
@@ -145,10 +148,24 @@ public class AuthService : IAuthService
         await _unitOfWork.Users.UpdateAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
-        _logger.LogInformation(
-            "Password reset token generated for user {UserId}; expires at {ExpiresAtUtc}",
-            user.UserId,
-            user.PasswordResetTokenExpires);
+        var frontendBaseUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:4200";
+        var resetUrl = $"{frontendBaseUrl}/reset-password";
+
+        try
+        {
+            await _emailService.SendPasswordResetEmailAsync(user.Email, token, resetUrl);
+            _logger.LogInformation(
+                "Password reset token generated and email sent for user {UserId}; expires at {ExpiresAtUtc}",
+                user.UserId,
+                user.PasswordResetTokenExpires);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to send password-reset email for user {UserId}. " +
+                "Token was saved but email delivery failed. Reset link: {ResetUrl}?token={Token}",
+                user.UserId, resetUrl, token);
+        }
     }
 
     public async Task<(bool Success, string? ErrorMessage)> ResetPasswordWithTokenAsync(ResetPasswordWithTokenDto request)

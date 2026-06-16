@@ -41,7 +41,7 @@ import { AuthService } from '../../services/auth.service';
           <div class="form-row">
             <div class="form-group">
               <label>Password</label>
-              <input type="password" [(ngModel)]="form.password" name="password" 
+              <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="form.password" name="password"
                      placeholder="Create password" required>
               <small class="field-hint">
                 At least 8 characters with uppercase, lowercase, number, and special character.
@@ -49,10 +49,15 @@ import { AuthService } from '../../services/auth.service';
             </div>
             <div class="form-group">
               <label>Confirm</label>
-              <input type="password" [(ngModel)]="form.confirmPassword" name="confirmPassword" 
+              <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="form.confirmPassword" name="confirmPassword"
                      placeholder="Confirm" required>
             </div>
           </div>
+
+          <label class="checkbox show-password-checkbox">
+            <input type="checkbox" [(ngModel)]="showPassword" name="showPassword">
+            <span>Show passwords</span>
+          </label>
 
           <hr class="divider">
 
@@ -160,6 +165,21 @@ import { AuthService } from '../../services/auth.service';
       color: #666;
       font-size: 12px;
       line-height: 1.4;
+    }
+
+    .show-password-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: #555;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .show-password-checkbox input {
+      width: 16px;
+      height: 16px;
     }
 
     .error-message {
@@ -275,6 +295,7 @@ export class RegisterComponent {
   private readonly passwordPattern =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,}$/;
   errorMessage = '';
+  showPassword = false;
 
   form = {
     fullName: '',
@@ -289,27 +310,27 @@ export class RegisterComponent {
   constructor(
     private router: Router,
     private auth: AuthService
-  ) {}
+  ) { }
 
   isValid(): boolean {
     return this.form.fullName.trim() !== '' &&
-           this.form.email.trim() !== '' &&
-           this.form.phone.trim() !== '' &&
-           this.form.password.trim() !== '' &&
-           this.form.password === this.form.confirmPassword &&
-           this.passwordPattern.test(this.form.password) &&
-           this.form.clinicName.trim() !== '' &&
-           this.form.clinicAddress.trim() !== '';
+      this.form.email.trim() !== '' &&
+      this.form.phone.trim() !== '' &&
+      this.form.password.trim() !== '' &&
+      this.form.password === this.form.confirmPassword &&
+      this.passwordPattern.test(this.form.password) &&
+      this.form.clinicName.trim() !== '' &&
+      this.form.clinicAddress.trim() !== '';
   }
 
   onSubmit(): void {
     this.errorMessage = '';
     if (!this.form.fullName.trim() ||
-        !this.form.email.trim() ||
-        !this.form.phone.trim() ||
-        !this.form.password.trim() ||
-        !this.form.clinicName.trim() ||
-        !this.form.clinicAddress.trim()) {
+      !this.form.email.trim() ||
+      !this.form.phone.trim() ||
+      !this.form.password.trim() ||
+      !this.form.clinicName.trim() ||
+      !this.form.clinicAddress.trim()) {
       this.errorMessage = 'Please fill all required fields.';
       return;
     }

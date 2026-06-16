@@ -11,9 +11,13 @@ public class ExaminationConfiguration : IEntityTypeConfiguration<Examination>
     {
         builder.HasKey(e => e.DiagnosisId);
 
-        builder.Property(e => e.Reason)
-            .IsRequired()
-            .HasMaxLength(500);
+        builder.Property(e => e.AnatomSite)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(e => e.Sex)
+            .HasMaxLength(20)
+            .IsRequired();
 
         builder.Property(e => e.Diagnosis)
             .HasMaxLength(2000);

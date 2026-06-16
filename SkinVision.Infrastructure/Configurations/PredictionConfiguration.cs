@@ -13,8 +13,11 @@ public class PredictionConfiguration : IEntityTypeConfiguration<Prediction>
         builder.Property(p => p.Classification) 
             .HasMaxLength(200);
             
-        builder.Property(p => p.Findings) 
+        builder.Property(p => p.Findings)
             .HasMaxLength(2000);
+
+        builder.Property(p => p.HeatmapPath)
+            .HasMaxLength(500);
 
         builder.Property(p => p.ModelVersion)
             .HasMaxLength(50);

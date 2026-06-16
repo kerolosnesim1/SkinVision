@@ -9,7 +9,6 @@ public interface IUnitOfWork : IDisposable
     IDoctorProfileRepository DoctorProfiles { get; }
     IReportRepository Reports { get; }
     IExternalLoginRepository ExternalLogins { get; }
-    IAuditLogRepository AuditLogs { get; }
 
     Task<int> SaveChangesAsync();
 }

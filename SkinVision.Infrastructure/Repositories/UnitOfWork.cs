@@ -13,7 +13,6 @@ public class UnitOfWork : IUnitOfWork
     private IDoctorProfileRepository? _doctorProfiles;
     private IReportRepository? _reports;
     private IExternalLoginRepository? _externalLogins;
-    private IAuditLogRepository? _auditLogs;
 
     public UnitOfWork(AppDbContext context)
     {
@@ -37,9 +36,6 @@ public class UnitOfWork : IUnitOfWork
 
     public IExternalLoginRepository ExternalLogins =>
         _externalLogins ??= new ExternalLoginRepository(_context);
-
-    public IAuditLogRepository AuditLogs =>
-        _auditLogs ??= new AuditLogRepository(_context);
 
     public async Task<int> SaveChangesAsync()
     {

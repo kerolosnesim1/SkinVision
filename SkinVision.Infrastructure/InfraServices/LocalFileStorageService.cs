@@ -90,6 +90,35 @@ public class LocalFileStorageService : IFileStorageService
         return $"uploads/{subFolder}/{fileNameGenerated}";
     }
 
+    public async Task<string> SaveBase64AsFileAsync(string base64Data, string contentType)
+    {
+        var subFolder = "heatmaps";
+        var uploadsRoot = Path.GetFullPath(Path.Combine(GetWebRootPath(), "uploads"));
+        var basePath = Path.GetFullPath(Path.Combine(uploadsRoot, subFolder));
+        if (!IsPathInside(basePath, uploadsRoot))
+        {
+            throw new InvalidOperationException("Invalid upload destination.");
+        }
+
+        Directory.CreateDirectory(basePath);
+
+        var extension = ExtensionByContentType.TryGetValue(contentType, out var ext) ? ext : ".png";
+        var fileNameGenerated = $"{Guid.NewGuid():N}{extension}";
+        var physicalPath = Path.GetFullPath(Path.Combine(basePath, fileNameGenerated));
+        if (!IsPathInside(physicalPath, uploadsRoot))
+        {
+            throw new InvalidOperationException("Invalid upload path.");
+        }
+
+        var bytes = Convert.FromBase64String(base64Data);
+        await using (var fileStreamOutput = new FileStream(physicalPath, FileMode.CreateNew))
+        {
+            await fileStreamOutput.WriteAsync(bytes);
+        }
+
+        return $"uploads/{subFolder}/{fileNameGenerated}";
+    }
+
     private static string GetSafeExtension(string contentType, string fileName)
     {
         if (ExtensionByContentType.TryGetValue(contentType, out var extension))
@@ -105,6 +134,38 @@ public class LocalFileStorageService : IFileStorageService
         }
 
         throw new InvalidOperationException("Unsupported file content type.");
+    }
+
+    public Task<Stream> ReadFileAsync(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException("File path cannot be empty.", nameof(filePath));
+        }
+
+        var relative = filePath.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar);
+        if (relative.Contains("..", StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Invalid file path.");
+        }
+
+        var root = GetWebRootPath();
+        var fullPath = Path.GetFullPath(Path.Combine(root, relative));
+
+        var webRootFull = Path.GetFullPath(root);
+        var isInsideWebRoot = fullPath.Equals(webRootFull, StringComparison.OrdinalIgnoreCase)
+            || fullPath.StartsWith(webRootFull + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+        if (!isInsideWebRoot)
+        {
+            throw new InvalidOperationException("File path is outside the web root.");
+        }
+
+        if (!File.Exists(fullPath))
+        {
+            throw new FileNotFoundException($"File not found: {filePath}");
+        }
+
+        return Task.FromResult<Stream>(new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous));
     }
 
     private static bool IsPathInside(string path, string root)

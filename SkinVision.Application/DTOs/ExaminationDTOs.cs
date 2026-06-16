@@ -11,8 +11,9 @@ public class ExaminationDto
     public int DoctorId { get; set; }
     public string PatientName { get; set; } = null!;
     public string? PatientPhone { get; set; }
-    public int? PatientAge { get; set; }
-    public string Reason { get; set; } = null!;
+    public int PatientAge { get; set; }
+    public string AnatomSite { get; set; } = null!;
+    public string Sex { get; set; } = null!;
     public string? Diagnosis { get; set; }
     public string? Treatment { get; set; }
     public string? FollowUp { get; set; }
@@ -35,12 +36,18 @@ public class CreateExaminationDto
 
     [StringLength(30)]
     public string? PatientPhone { get; set; }
-    [Range(0, 120, ErrorMessage = "Patient age must be between 0 and 120.")]
-    public int? PatientAge { get; set; }
 
-    [Required]
-    [StringLength(2000, MinimumLength = 1)]
-    public string Reason { get; set; } = null!;
+    [Required(ErrorMessage = "Patient age is required.")]
+    [Range(0, 120, ErrorMessage = "Patient age must be between 0 and 120.")]
+    public int PatientAge { get; set; }
+
+    [Required(ErrorMessage = "Lesion location is required.")]
+    [StringLength(100)]
+    public string AnatomSite { get; set; } = null!;
+
+    [Required(ErrorMessage = "Patient gender is required.")]
+    [StringLength(20)]
+    public string Sex { get; set; } = null!;
 
     [StringLength(2000)]
     public string? Diagnosis { get; set; }
@@ -61,6 +68,21 @@ public class CreateExaminationDto
 }
 public class UpdateExaminationDto
 {
+    [StringLength(200, MinimumLength = 1)]
+    public string? PatientName { get; set;}
+
+    [StringLength(30)]
+    public string? PatientPhone { get; set;}
+
+    [Range(0, 120, ErrorMessage = "Patient age must be between 0 and 120.")]
+    public int? PatientAge { get; set;}
+
+    [StringLength(100)]
+    public string? AnatomSite { get; set;}
+
+    [StringLength(20)]
+    public string? Sex { get; set;}
+
     [StringLength(2000)]
     public string? Diagnosis { get; set;}
 
@@ -82,7 +104,7 @@ public class ExaminationListItemDto
     public int DiagnosisId { get; set; }
     public string PatientName { get; set; } = null!;
     public string? PatientPhone { get; set; }
-    public string Reason { get; set; } = null!;
+    public string? AnatomSite { get; set; }
     public string? Diagnosis { get; set; }
     public string? RiskLevel { get; set; }
     public DateTime? CreatedAt { get; set; }

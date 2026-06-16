@@ -42,16 +42,21 @@ import { ReportService } from '../../services/report.service';
 
       <!-- Examinations Table -->
       <div class="card">
+        <div *ngIf="loading" class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading examinations...</p>
+        </div>
+
         <div *ngIf="errorMessage" class="empty-state">
           <p>{{ errorMessage }}</p>
         </div>
 
-        <table class="exam-table">
+        <table class="exam-table" *ngIf="!loading && !errorMessage">
           <thead>
             <tr>
               <th>Date</th>
               <th>Patient</th>
-              <th>Reason</th>
+              <th>Lesion Location</th>
               <th>Diagnosis</th>
               <th>Risk</th>
               <th>Actions</th>
@@ -64,7 +69,7 @@ import { ReportService } from '../../services/report.service';
                 <strong>{{ exam.patientName }}</strong>
                 <span class="phone">{{ exam.patientPhone }}</span>
               </td>
-              <td>{{ exam.reason }}</td>
+              <td>{{ exam.anatomSite || 'N/A' }}</td>
               <td class="diagnosis-cell">{{ exam.diagnosis }}</td>
               <td>
                 <span class="risk-badge" [class]="exam.riskLevel?.toLowerCase()">
@@ -74,6 +79,7 @@ import { ReportService } from '../../services/report.service';
               <td class="actions-cell">
                 <a [routerLink]="['/dashboard/examination', exam.diagnosisId]" class="btn btn-secondary btn-sm">View</a>
                 <button class="btn btn-secondary btn-sm" (click)="downloadReport(exam)">PDF</button>
+                <button class="btn btn-danger btn-sm" (click)="deleteExamination(exam)">Delete</button>
               </td>
             </tr>
           </tbody>
@@ -213,6 +219,18 @@ import { ReportService } from '../../services/report.service';
       font-size: 12px;
     }
 
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
     .empty-state {
       text-align: center;
       padding: 50px;
@@ -251,6 +269,7 @@ export class ExaminationsListComponent implements OnInit, OnDestroy {
   filterRisk = '';
   filterDate = '';
   filteredExaminations: ExaminationListItem[] = [];
+  loading = true;
   errorMessage = '';
   toastMessage = '';
 
@@ -281,10 +300,12 @@ export class ExaminationsListComponent implements OnInit, OnDestroy {
         next: (list) => {
           this.filteredExaminations = list;
           this.errorMessage = '';
+          this.loading = false;
           this.cdr.detectChanges();
         },
         error: () => {
           this.errorMessage = 'Failed to load examinations.';
+          this.loading = false;
           this.cdr.detectChanges();
         }
       });
@@ -323,6 +344,22 @@ export class ExaminationsListComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.showToast('Failed to generate/download report');
+        }
+      });
+  }
+
+  deleteExamination(exam: ExaminationListItem): void {
+    if (!confirm(`Are you sure you want to delete examination #${exam.diagnosisId} for ${exam.patientName}?`)) return;
+
+    this.examinationService.deleteExamination(exam.diagnosisId)
+      .subscribe({
+        next: () => {
+          this.filteredExaminations = this.filteredExaminations.filter(e => e.diagnosisId !== exam.diagnosisId);
+          this.showToast('Examination deleted');
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.showToast('Failed to delete examination');
         }
       });
   }

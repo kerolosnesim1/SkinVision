@@ -96,7 +96,8 @@ public class PdfReportGeneratorService : IReportGeneratorService
                             ["Patient Name"] = examination.PatientName,
                             ["Age"] = $"{examination.PatientAge} years",
                             ["Phone"] = examination.PatientPhone ?? "N/A",
-                            ["Reason for Visit"] = examination.Reason
+                            ["Lesion Location"] = examination.AnatomSite ?? "N/A",
+                            ["Sex"] = examination.Sex ?? "N/A"
                         }));
 
                         // Examination Details
@@ -122,11 +123,49 @@ public class PdfReportGeneratorService : IReportGeneratorService
                                     {
                                         row.RelativeItem().Padding(4).Column(imgCol =>
                                         {
-                                            imgCol.Item().Height(120).Image(imagePath)
-                                                .FitArea();
-                                            imgCol.Item().AlignCenter()
-                                                .Text(image.BodyPart ?? "Skin Image")
-                                                .FontSize(8).FontColor(Colors.Grey.Medium);
+                                            // Show original image and heatmap side-by-side if heatmap exists
+                                            if (image.AiResult != null && !string.IsNullOrEmpty(image.AiResult.HeatmapPath))
+                                            {
+                                                var heatmapPhysicalPath = GetPhysicalImagePath(image.AiResult.HeatmapPath);
+                                                if (File.Exists(heatmapPhysicalPath))
+                                                {
+                                                    imgCol.Item().Row(imgRow =>
+                                                    {
+                                                        imgRow.RelativeItem().PaddingHorizontal(2).Column(origCol =>
+                                                        {
+                                                            origCol.Item().Height(120).Image(imagePath)
+                                                                .FitArea();
+                                                            origCol.Item().AlignCenter()
+                                                                .Text("Original")
+                                                                .FontSize(8).FontColor(Colors.Grey.Medium);
+                                                        });
+                                                        imgRow.RelativeItem().PaddingHorizontal(2).Column(heatCol =>
+                                                        {
+                                                            heatCol.Item().Height(120).Image(heatmapPhysicalPath)
+                                                                .FitArea();
+                                                            heatCol.Item().AlignCenter()
+                                                                .Text("Grad-CAM Heatmap")
+                                                                .FontSize(8).FontColor(Colors.Grey.Medium);
+                                                        });
+                                                    });
+                                                }
+                                                else
+                                                {
+                                                    imgCol.Item().Height(120).Image(imagePath)
+                                                        .FitArea();
+                                                    imgCol.Item().AlignCenter()
+                                                        .Text(image.BodyPart ?? "Skin Image")
+                                                        .FontSize(8).FontColor(Colors.Grey.Medium);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                imgCol.Item().Height(120).Image(imagePath)
+                                                    .FitArea();
+                                                imgCol.Item().AlignCenter()
+                                                    .Text(image.BodyPart ?? "Skin Image")
+                                                    .FontSize(8).FontColor(Colors.Grey.Medium);
+                                            }
                                         });
                                     }
                                 }
@@ -304,3 +343,4 @@ public class PdfReportGeneratorService : IReportGeneratorService
         return Path.Combine(webRoot, cleanPath);
     }
 }
+

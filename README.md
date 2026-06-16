@@ -29,7 +29,7 @@
   <img src="https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet" alt=".NET 9" />
   <img src="https://img.shields.io/badge/Angular-21-DD0031?logo=angular" alt="Angular 21" />
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/PyTorch-EfficientNet--B3-EE4C2C?logo=pytorch&logoColor=white" alt="PyTorch" />
+  <img src="https://img.shields.io/badge/PyTorch-HRNet%20%2B%20Swin%20%2B%20XGBoost-EE4C2C?logo=pytorch&logoColor=white" alt="PyTorch" />
   <img src="https://img.shields.io/badge/SQL%20Server-2022-CC2927?logo=microsoftsqlserver&logoColor=white" alt="SQL Server" />
   <img src="https://img.shields.io/badge/Clean-Architecture-0A0A0A" alt="Clean Architecture" />
 </p>
@@ -93,13 +93,14 @@ The platform is designed around real-world backend engineering concerns includin
 
 # AI Model
 
-SkinVision uses a multimodal EfficientNet-B3 model trained on the ISIC 2019 dataset (~25k dermoscopy images across 9 diagnostic classes).
+SkinVision uses a multi-model ensemble trained on the ISIC 2019 dataset (~25k dermoscopy images across 9 diagnostic classes).
 
-The model combines:
-- dermoscopy image features
-- patient metadata (age, sex, anatomical site)
+The ensemble combines:
+- **HRNet-W32** backbone with metadata cross-attention
+- **Swin-V2-T** backbone with metadata cross-attention
+- **XGBoost meta-classifier** stacking both CNN outputs
 
-to improve classification quality beyond image-only inference.
+with Dullrazor hair-removal preprocessing and optional Grad-CAM explainability heatmaps, to improve classification quality beyond single-model inference.
 
 ## Supported classifications
 
@@ -178,9 +179,10 @@ The platform uses:
 
 ## AI
 
-- Multimodal lesion classification
-- EfficientNet-B3 inference pipeline
-- Metadata-enhanced prediction workflow
+- Multi-model ensemble lesion classification (HRNet + Swin + XGBoost)
+- Dullrazor hair-removal preprocessing pipeline
+- Metadata-enhanced cross-attention fusion workflow
+- Grad-CAM explainability heatmaps
 - Independent ML microservice
 
 ## Security

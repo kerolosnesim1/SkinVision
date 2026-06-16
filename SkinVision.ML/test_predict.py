@@ -1,4 +1,8 @@
-"""Quick smoke test for the /predict endpoint."""
+"""Quick smoke test for the /predict endpoint.
+
+Sends a synthetic image + metadata and prints the JSON response.
+Optionally requests a Grad-CAM heatmap.
+"""
 import io
 import json
 import urllib.request
@@ -31,6 +35,11 @@ parts.append(f"--{boundary}")
 parts.append('Content-Disposition: form-data; name="anatom_site"')
 parts.append("")
 parts.append("head/neck")
+
+parts.append(f"--{boundary}")
+parts.append('Content-Disposition: form-data; name="include_heatmap"')
+parts.append("")
+parts.append("true")
 
 parts.append(f"--{boundary}--")
 parts.append("")

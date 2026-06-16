@@ -32,8 +32,9 @@ export interface Examination {
     diagnosisId: number;
     patientName: string;
     patientPhone?: string;
-    patientAge?: number;
-    reason: string;
+    patientAge: number;
+    anatomSite: string;
+    sex: string;
     diagnosis: string;
     treatment?: string;
     followUp?: string;
@@ -50,7 +51,7 @@ export interface ExaminationListItem {
     diagnosisId: number;
     patientName: string;
     patientPhone?: string;
-    reason: string;
+    anatomSite?: string;
     diagnosis: string;
     riskLevel?: string;
     createdAt?: Date;
@@ -65,8 +66,9 @@ export interface ExaminationStats {
 export interface CreateExamination {
     patientName: string;
     patientPhone?: string;
-    patientAge?: number;
-    reason: string;
+    patientAge: number;
+    anatomSite: string;
+    sex: string;
     diagnosis: string;
     treatment: string;
     followUp?: string;
@@ -77,6 +79,11 @@ export interface CreateExamination {
 }
 
 export interface UpdateExamination {
+    patientName?: string;
+    patientPhone?: string;
+    patientAge?: number;
+    anatomSite?: string;
+    sex?: string;
     diagnosis?: string;
     treatment?: string;
     followUp?: string;
@@ -94,7 +101,8 @@ export interface Image {
     uploadDate?: Date;
     patientName?: string;
     patientAge?: number;
-    examinationReason?: string;
+    anatomSite?: string;
+    sex?: string;
     bodyPart?: string;
     aiResult?: Prediction;
 }
@@ -106,6 +114,7 @@ export interface Prediction {
     modelVersion?: string;
     createdAt?: Date;
     findings: string[];
+    heatmapPath?: string;
 }
 
 // Report models

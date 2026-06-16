@@ -41,8 +41,9 @@ public class ExaminationService : IExaminationService
             DoctorId = doctorId,
             PatientName = dto.PatientName,
             PatientPhone = dto.PatientPhone,
-            PatientAge = dto.PatientAge ?? 0,
-            Reason = dto.Reason,
+            PatientAge = dto.PatientAge,
+            AnatomSite = dto.AnatomSite,
+            Sex = dto.Sex,
             Diagnosis = dto.Diagnosis,
             Treatment = dto.Treatment,
             FollowUp = dto.FollowUp,
@@ -62,6 +63,12 @@ public class ExaminationService : IExaminationService
         if (existingExamination == null || existingExamination.DoctorId != doctorId)
             return null;
 
+        existingExamination.PatientName = dto.PatientName ?? existingExamination.PatientName;
+        existingExamination.PatientPhone = dto.PatientPhone ?? existingExamination.PatientPhone;
+        if (dto.PatientAge.HasValue)
+            existingExamination.PatientAge = dto.PatientAge.Value;
+        existingExamination.AnatomSite = dto.AnatomSite ?? existingExamination.AnatomSite;
+        existingExamination.Sex = dto.Sex ?? existingExamination.Sex;
         existingExamination.Diagnosis = dto.Diagnosis ?? existingExamination.Diagnosis;
         existingExamination.Treatment = dto.Treatment ?? existingExamination.Treatment;
         if (dto.Status.HasValue)
@@ -111,7 +118,8 @@ public class ExaminationService : IExaminationService
             PatientName = e.PatientName,
             PatientPhone = e.PatientPhone,
             PatientAge = e.PatientAge,
-            Reason = e.Reason,
+            AnatomSite = e.AnatomSite,
+            Sex = e.Sex,
             Diagnosis = e.Diagnosis,
             Treatment = e.Treatment,
             FollowUp = e.FollowUp,
@@ -142,7 +150,7 @@ public class ExaminationService : IExaminationService
             DiagnosisId = e.DiagnosisId,
             PatientName = e.PatientName,
             PatientPhone = e.PatientPhone,
-            Reason = e.Reason,
+            AnatomSite = e.AnatomSite,
             Diagnosis = e.Diagnosis ?? "Pending",
             RiskLevel = e.RiskLevel,
             CreatedAt = e.CreatedAt
@@ -176,7 +184,8 @@ public class ExaminationService : IExaminationService
             ConfidenceScore = p.ConfidenceScore,
             ModelVersion = p.ModelVersion,
             CreatedAt = p.CreatedAt,
-            Findings = findingsList
+            Findings = findingsList,
+            HeatmapPath = p.HeatmapPath
         };
     }
 }

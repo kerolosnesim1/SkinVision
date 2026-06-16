@@ -26,7 +26,11 @@ import { AuthService } from '../../services/auth.service';
 
           <div class="form-group">
             <label>Password</label>
-            <input type="password" [(ngModel)]="password" name="password" placeholder="Enter your password" required>
+            <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" name="password" placeholder="Enter your password" required>
+            <label class="checkbox show-password-checkbox">
+              <input type="checkbox" [(ngModel)]="showPassword" name="showPassword">
+              <span>Show password</span>
+            </label>
           </div>
 
           <div class="form-options">
@@ -152,6 +156,11 @@ import { AuthService } from '../../services/auth.service';
       height: 16px;
     }
 
+    .show-password-checkbox {
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
     .form-options a {
       color: #167D7E;
       text-decoration: none;
@@ -235,6 +244,7 @@ import { AuthService } from '../../services/auth.service';
 export class LoginComponent {
   email = '';
   password = '';
+  showPassword = false;
   rememberMe = false;
   errorMessage = '';
 
@@ -242,7 +252,7 @@ export class LoginComponent {
     private router: Router,
     private auth: AuthService
 
-  ) {}
+  ) { }
 
   onSubmit() {
     if (!this.email || !this.password) {
@@ -250,7 +260,7 @@ export class LoginComponent {
       return;
     }
 
-  
+
     this.auth.login(this.email, this.password).subscribe({
       next: () => {
         this.router.navigate(['/dashboard']);
@@ -264,9 +274,9 @@ export class LoginComponent {
   googleLogin() {
     this.auth.googleLogin();
   }
-} 
-    
+}
 
-  
-  
+
+
+
 

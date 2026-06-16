@@ -9,7 +9,7 @@ namespace SkinVision.Application.Services;
 
 public class DlPredictionService : IDlPredictionService
 {
-    private const string ModelVersion = "SkinVision.ML 1.0.0";
+    private const string ModelVersion = "SkinVision.ML 2.0.0";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -70,7 +70,8 @@ public class DlPredictionService : IDlPredictionService
             ConfidenceScore = Convert.ToDecimal(payload.Confidence, CultureInfo.InvariantCulture),
             ModelVersion = ModelVersion,
             CreatedAt = DateTime.UtcNow,
-            Findings = BuildFindings(payload)
+            Findings = BuildFindings(payload),
+            HeatmapBase64 = payload.HeatmapBase64
         };
     }
 
@@ -131,5 +132,8 @@ public class DlPredictionService : IDlPredictionService
 
         [JsonPropertyName("prediction_entropy")]
         public double? PredictionEntropy { get; set; }
+
+        [JsonPropertyName("heatmap_base64")]
+        public string? HeatmapBase64 { get; set; }
     }
 }

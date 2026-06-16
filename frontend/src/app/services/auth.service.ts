@@ -54,24 +54,24 @@ export class AuthService {
         );
     }
 
-    /** Redirects the browser to the backend Google OAuth endpoint */
     googleLogin(): void {
         window.location.href = `${this.oauthApiUrl}/google-login`;
     }
 
-    /** Stores OAuth callback data (called by the callback component) */
     handleOAuthCallback(token: string, user: User): void {
         localStorage.setItem('token', token);
         localStorage.setItem('currentUser', JSON.stringify(user));
         this.currentUserSubject.next(user);
     }
 
-    /** Initiates Google account linking via redirect */
     linkGoogle(): void {
-        window.location.href = `${this.oauthApiUrl}/link-google`;
+        const token = localStorage.getItem('token');
+        if (!token) {
+            return;
+        }
+        window.location.href = `${this.oauthApiUrl}/link-google?token=${encodeURIComponent(token)}`;
     }
 
-    /** Unlinks Google account from the current user */
     unlinkGoogle(): Observable<{ message: string }> {
         return this.http.delete<{ message: string }>(`${this.oauthApiUrl}/unlink-google`);
     }

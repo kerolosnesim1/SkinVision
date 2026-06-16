@@ -1,4 +1,5 @@
 using System;
+using System;
 using System.Collections.Generic;
 using SkinVision.Domain.Enums;
 
@@ -15,7 +16,8 @@ public class Examination
     public string? PatientPhone { get; set; }
     public int PatientAge { get; set; }
 
-    public string Reason { get; set; } = null!;
+    public string AnatomSite { get; set; } = null!;
+    public string Sex { get; set; } = null!;
 
     public string? Diagnosis { get; set; }
     public string? Treatment { get; set; }

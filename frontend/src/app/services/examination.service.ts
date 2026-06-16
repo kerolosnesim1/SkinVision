@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpEventType } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { tap, filter, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { Examination, ExaminationListItem, ExaminationStats, CreateExamination, Image, UpdateExamination } from '../models/models';
+import { Examination, ExaminationListItem, ExaminationStats, CreateExamination, Image, UpdateExamination, Prediction } from '../models/models';
 
 @Injectable({
     providedIn: 'root'
@@ -49,13 +49,66 @@ export class ExaminationService {
     getStats(): Observable<ExaminationStats> {
         return this.http.get<ExaminationStats>(`${this.apiUrl}/stats`);
     }
-    uploadImage(id: number, file: File, metadata?: { bodyPart?: string }): Observable<Image> {
+    uploadImage(id: number, file: File): Observable<Image> {
         const formData = new FormData();
         formData.append('file', file);
-        if (metadata?.bodyPart) {
-            formData.append('bodyPart', metadata.bodyPart);
-        }
         return this.http.post<Image>(`${this.apiUrl}/${id}/images`, formData);
+    }
+
+    /** Upload image with progress tracking. Emits progress (0-100) and final Image result. */
+    uploadImageWithProgress(id: number, file: File): Observable<{ progress: number; result?: Image }> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.http.post<Image>(`${this.apiUrl}/${id}/images`, formData, {
+            reportProgress: true,
+            observe: 'events'
+        }).pipe(
+            map(event => {
+                if (event.type === HttpEventType.UploadProgress) {
+                    const progress = event.total ? Math.round((event.loaded / event.total) * 100) : 0;
+                    return { progress };
+                }
+                if (event.type === HttpEventType.Response) {
+                    return { progress: 100, result: event.body as Image };
+                }
+                return { progress: 0 };
+            }),
+            filter(data => data.progress > 0 || data.result !== undefined)
+        );
+    }
+
+    /** Upload image only (no AI prediction). Used for decoupled upload + analyze flow. */
+    uploadImageOnly(id: number, file: File): Observable<Image> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.http.post<Image>(`${this.apiUrl}/${id}/images/upload`, formData);
+    }
+
+    /** Upload image only with progress tracking. Emits progress (0-100) and final Image result. */
+    uploadImageOnlyWithProgress(id: number, file: File): Observable<{ progress: number; result?: Image }> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.http.post<Image>(`${this.apiUrl}/${id}/images/upload`, formData, {
+            reportProgress: true,
+            observe: 'events'
+        }).pipe(
+            map(event => {
+                if (event.type === HttpEventType.UploadProgress) {
+                    const progress = event.total ? Math.round((event.loaded / event.total) * 100) : 0;
+                    return { progress };
+                }
+                if (event.type === HttpEventType.Response) {
+                    return { progress: 100, result: event.body as Image };
+                }
+                return { progress: 0 };
+            }),
+            filter(data => data.progress > 0 || data.result !== undefined)
+        );
+    }
+
+    /** Run AI analysis on an already-uploaded image. Returns Prediction result. */
+    analyzeImage(examinationId: number, imageId: number): Observable<Prediction> {
+        return this.http.post<Prediction>(`${this.apiUrl}/${examinationId}/images/${imageId}/analyze`, {});
     }
 
 }

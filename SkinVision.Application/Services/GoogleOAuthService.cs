@@ -72,7 +72,7 @@ public class GoogleOAuthService : IOAuthService
         // Case 3: No external login, no matching user → auto-register
         var newUser = new User
         {
-            Username = name,
+            Username = email,
             Email = email,
             PasswordHash = null, // OAuth-only user — no password
             Role = UserRole.Doctor,

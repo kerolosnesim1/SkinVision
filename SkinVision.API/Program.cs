@@ -85,11 +85,11 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IExaminationService, ExaminationService>();
 builder.Services.AddScoped<IDoctorProfileService, DoctorProfileService>();
 builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IReportGeneratorService, PdfReportGeneratorService>();
 builder.Services.AddScoped<IOAuthService, GoogleOAuthService>();
-builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddHttpClient<IDlPredictionService, DlPredictionService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["DlService:BaseUrl"]!);

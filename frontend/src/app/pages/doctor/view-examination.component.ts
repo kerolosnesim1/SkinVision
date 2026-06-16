@@ -1,36 +1,51 @@
 import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ExaminationService } from '../../services/examination.service';
 import { ReportService } from '../../services/report.service';
-import { Examination, Report, DoctorProfile } from '../../models/models';
+import { Examination, Report, DoctorProfile, UpdateExamination } from '../../models/models';
 import { environment } from '../../../environments/environment';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-view-examination',
   standalone: true,
-  imports: [RouterLink, CommonModule],
+  imports: [RouterLink, CommonModule, FormsModule],
   template: `
     <div class="view-page">
       <div class="page-header">
         <a routerLink="/dashboard/examinations" class="back-link">← Back to History</a>
         <div class="header-actions">
+          <button *ngIf="!isEditing" class="btn btn-secondary" (click)="startEditing()">✏️ Edit</button>
+          <button *ngIf="isEditing" class="btn btn-primary" (click)="saveChanges()" [disabled]="saving">
+            {{ saving ? 'Saving...' : '💾 Save Changes' }}
+          </button>
+          <button *ngIf="isEditing" class="btn btn-secondary" (click)="cancelEditing()">Cancel</button>
+          <button *ngIf="!isEditing" class="btn btn-danger" (click)="deleteExamination()">🗑️ Delete</button>
           <button
+            *ngIf="!isEditing"
             class="btn btn-primary"
             (click)="generateAndDownloadPDF()"
+            [disabled]="pdfBusy"
             id="download-report-btn">
-            📄 Download PDF
+            {{ pdfBusy ? 'Generating...' : '📄 Download PDF' }}
           </button>
         </div>
       </div>
 
-      <div class="error-state" *ngIf="errorMessage">
+      <div class="error-state" *ngIf="errorMessage && !loading">
         <p>{{ errorMessage }}</p>
         <a routerLink="/dashboard/examinations" class="btn btn-primary">Back to Examinations</a>
       </div>
 
-      <div class="report-card" *ngIf="exam">
+      <div *ngIf="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading examination...</p>
+      </div>
+
+      <!-- VIEW MODE -->
+      <div class="report-card" *ngIf="exam && !loading && !isEditing">
         <div class="report-header">
           <div class="clinic-info">
            <h1>{{ exam.doctor?.clinicName || 'SkinVision Clinic' }}</h1>
@@ -59,8 +74,12 @@ import { Subject, takeUntil } from 'rxjs';
               <p>{{ exam.patientAge }} years</p>
             </div>
             <div class="info-item">
-              <label>Reason for Visit</label>
-              <p>{{ exam.reason }}</p>
+              <label>Lesion Location</label>
+              <p>{{ exam.anatomSite || 'N/A' }}</p>
+            </div>
+            <div class="info-item">
+              <label>Sex</label>
+              <p>{{ exam.sex || 'N/A' }}</p>
             </div>
           </div>
         </div>
@@ -98,6 +117,14 @@ import { Subject, takeUntil } from 'rxjs';
               <li *ngFor="let finding of exam.aiAnalysis.findings">{{ finding }}</li>
             </ul>
           </div>
+          <div class="heatmap-section" *ngIf="exam.aiAnalysis.heatmapPath">
+            <label>Explainable AI — Grad-CAM Heatmap</label>
+            <p class="heatmap-description">The heatmap highlights regions of the image that most influenced the AI classification decision.</p>
+            <div class="heatmap-overlay-container" *ngIf="exam.images && exam.images.length > 0">
+              <img class="heatmap-original" [src]="getImageUrl(exam.images[0].filePath)" alt="Original image">
+              <img class="heatmap-overlay" [src]="getHeatmapUrl(exam.aiAnalysis.heatmapPath)" alt="Grad-CAM heatmap">
+            </div>
+          </div>
         </div>
 
         <div class="section diagnosis-section">
@@ -129,6 +156,174 @@ import { Subject, takeUntil } from 'rxjs';
         </div>
 
         <!-- Previous Reports Section -->
+        <div class="section reports-section" *ngIf="reports.length > 0">
+          <h2>Generated Reports</h2>
+          <div class="reports-list">
+            <div class="report-item" *ngFor="let report of reports">
+              <div class="report-info">
+                <span class="report-icon">📄</span>
+                <div>
+                  <p class="report-title">{{ report.title }}</p>
+                  <p class="report-date">{{ report.createdAt | date:'MMM dd, yyyy - hh:mm a' }}</p>
+                </div>
+              </div>
+              <div class="report-actions">
+                <button class="btn-icon" (click)="downloadExistingReport(report)" title="Download">⬇️</button>
+                <button class="btn-icon btn-icon-danger" (click)="deleteReport(report)" title="Delete">🗑️</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="report-footer">
+          <p>This report was generated using SkinVision AI-Powered Dermatology Platform</p>
+          <p class="disclaimer">AI analysis is advisory only. Clinical diagnosis by licensed physician.</p>
+        </div>
+      </div>
+
+      <!-- EDIT MODE -->
+      <div class="edit-card" *ngIf="exam && !loading && isEditing">
+        <div class="edit-header">
+          <div class="clinic-info">
+            <h1>{{ exam.doctor?.clinicName || 'SkinVision Clinic' }}</h1>
+            <p>{{ exam.doctor?.fullName || 'Doctor' }}</p>
+            <p>{{ exam.doctor?.clinicAddress || '' }}</p>
+          </div>
+          <div class="report-meta">
+            <p><strong>Examination ID:</strong> #{{ examId }}</p>
+            <p><strong>Date:</strong> {{ exam.createdAt | date:'MMMM dd, yyyy - hh:mm a' }}</p>
+          </div>
+        </div>
+
+        <!-- Patient Information - Editable -->
+        <div class="section patient-section">
+          <h2>Patient Information</h2>
+          <div class="edit-form-grid">
+            <div class="form-group">
+              <label for="edit-patientName">Name *</label>
+              <input id="edit-patientName" type="text" [(ngModel)]="editForm.patientName" name="patientName" placeholder="Full name">
+            </div>
+            <div class="form-group">
+              <label for="edit-anatomSite">Lesion Location *</label>
+              <select id="edit-anatomSite" [(ngModel)]="editForm.anatomSite" name="anatomSite" required>
+                <option value="">Select lesion location</option>
+                <option value="anterior torso">Anterior Torso</option>
+                <option value="head/neck">Head / Neck</option>
+                <option value="lower extremity">Lower Extremity</option>
+                <option value="oral/genital">Oral / Genital</option>
+                <option value="palms/soles">Palms / Soles</option>
+                <option value="posterior torso">Posterior Torso</option>
+                <option value="upper extremity">Upper Extremity</option>
+                <option value="unknown">Unknown</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="edit-patientAge">Age *</label>
+              <input id="edit-patientAge" type="number" [(ngModel)]="editForm.patientAge" name="patientAge" placeholder="Age" min="0" max="120" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-sex">Gender *</label>
+              <select id="edit-sex" [(ngModel)]="editForm.sex" name="sex" required>
+                <option value="">Select sex</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="unknown">Unknown</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="edit-patientPhone">Phone</label>
+              <input id="edit-patientPhone" type="tel" [(ngModel)]="editForm.patientPhone" name="patientPhone" placeholder="Phone number">
+            </div>
+          </div>
+        </div>
+
+        <!-- Images - Read Only in Edit -->
+        <div class="section" *ngIf="exam.images && exam.images.length > 0">
+          <h2>Dermascope Images</h2>
+          <div class="images-grid">
+            <div *ngFor="let img of exam.images" class="image-item">
+              <img [src]="getImageUrl(img.filePath)" alt="Dermascope image">
+              <div class="image-meta" *ngIf="img.bodyPart">
+                {{ img.bodyPart }}
+              </div>
+              <div class="image-ai" *ngIf="img.aiResult">
+                AI: {{ img.aiResult.classification }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Analysis - Read Only in Edit -->
+        <div class="section ai-section" *ngIf="exam.aiAnalysis">
+          <h2>AI Analysis</h2>
+          <div class="ai-result">
+            <div class="ai-classification">
+              <label>Classification</label>
+              <h3>{{ exam.aiAnalysis.classification }}</h3>
+            </div>
+            <div class="ai-confidence" *ngIf="exam.aiAnalysis.confidenceScore">
+              <label>Confidence</label>
+              <h3>{{ (exam.aiAnalysis.confidenceScore * 100).toFixed(1) }}%</h3>
+            </div>
+          </div>
+          <div class="ai-findings" *ngIf="exam.aiAnalysis.findings && exam.aiAnalysis.findings.length > 0">
+            <label>Findings</label>
+            <ul>
+              <li *ngFor="let finding of exam.aiAnalysis.findings">{{ finding }}</li>
+            </ul>
+          </div>
+          <div class="heatmap-section" *ngIf="exam.aiAnalysis.heatmapPath">
+            <label>Explainable AI — Grad-CAM Heatmap</label>
+            <p class="heatmap-description">The heatmap highlights regions of the image that most influenced the AI classification decision.</p>
+            <div class="heatmap-overlay-container" *ngIf="exam.images && exam.images.length > 0">
+              <img class="heatmap-original" [src]="getImageUrl(exam.images[0].filePath)" alt="Original image">
+              <img class="heatmap-overlay" [src]="getHeatmapUrl(exam.aiAnalysis.heatmapPath)" alt="Grad-CAM heatmap">
+            </div>
+          </div>
+        </div>
+
+        <!-- Diagnosis & Treatment - Editable -->
+        <div class="section diagnosis-section">
+          <h2>Diagnosis & Treatment</h2>
+          <div class="edit-diagnosis-content">
+            <div class="form-group">
+              <label for="edit-diagnosis">Diagnosis *</label>
+              <textarea id="edit-diagnosis" [(ngModel)]="editForm.diagnosis" name="diagnosis" rows="3"
+                        placeholder="Enter diagnosis"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-treatment">Treatment Plan</label>
+              <textarea id="edit-treatment" [(ngModel)]="editForm.treatment" name="treatment" rows="3"
+                        placeholder="Enter treatment plan"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-followUp">Follow-up Instructions</label>
+              <textarea id="edit-followUp" [(ngModel)]="editForm.followUp" name="followUp" rows="3"
+                        placeholder="Enter follow-up instructions"></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="edit-riskLevel">Risk Level</label>
+                <select id="edit-riskLevel" [(ngModel)]="editForm.riskLevel" name="riskLevel">
+                  <option value="">Not Set</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="edit-followUpDate">Follow-up Date</label>
+                <input type="date" id="edit-followUpDate" [(ngModel)]="editForm.followUpDate" name="followUpDate">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reports - Read Only in Edit -->
         <div class="section reports-section" *ngIf="reports.length > 0">
           <h2>Generated Reports</h2>
           <div class="reports-list">
@@ -190,19 +385,66 @@ import { Subject, takeUntil } from 'rxjs';
       gap: 10px;
     }
 
+    .btn {
+      border: none;
+      cursor: pointer;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--secondary-color);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+      text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
     .error-state {
       text-align: center;
       padding: 80px 20px;
       color: var(--text-light);
     }
-    .report-card {
+
+    .report-card, .edit-card {
       background: var(--white);
       border-radius: 12px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.08);
       overflow: hidden;
     }
 
-    .report-header {
+    .edit-card {
+      border: 2px solid var(--primary-color);
+    }
+
+    .report-header, .edit-header {
       display: flex;
       justify-content: space-between;
       padding: 30px;
@@ -247,6 +489,7 @@ import { Subject, takeUntil } from 'rxjs';
       letter-spacing: 0.5px;
     }
 
+    /* View mode styles */
     .info-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -329,6 +572,47 @@ import { Subject, takeUntil } from 'rxjs';
       color: var(--text-dark);
     }
 
+    .heatmap-section {
+      margin-top: 20px;
+    }
+
+    .heatmap-section label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+
+    .heatmap-description {
+      font-size: 13px;
+      color: var(--text-light);
+      margin: 6px 0 12px;
+    }
+
+    .heatmap-overlay-container {
+      position: relative;
+      width: 224px;
+      height: 224px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid var(--border-color);
+    }
+
+    .heatmap-original {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .heatmap-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.5;
+    }
+
     .diagnosis-content {
       display: flex;
       flex-direction: column;
@@ -365,6 +649,66 @@ import { Subject, takeUntil } from 'rxjs';
     .risk-badge.low { background: #d4edda; color: #155724; }
     .risk-badge.medium { background: #fff3cd; color: #856404; }
     .risk-badge.high { background: #f8d7da; color: #721c24; }
+
+    /* Edit mode styles */
+    .edit-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .edit-diagnosis-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 0;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-light);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      background: var(--white);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(22, 125, 126, 0.1);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 20px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
 
     /* Reports List */
     .reports-list {
@@ -473,7 +817,7 @@ import { Subject, takeUntil } from 'rxjs';
     }
 
     @media (max-width: 768px) {
-      .info-grid {
+      .info-grid, .edit-form-grid {
         grid-template-columns: 1fr;
       }
 
@@ -486,13 +830,22 @@ import { Subject, takeUntil } from 'rxjs';
         gap: 20px;
       }
 
-      .report-header {
+      .report-header, .edit-header {
         flex-direction: column;
         gap: 16px;
       }
 
       .report-meta {
         text-align: left;
+      }
+
+      .form-row {
+        flex-direction: column;
+        gap: 0;
+      }
+
+      .header-actions {
+        flex-wrap: wrap;
       }
     }
   `]
@@ -502,13 +855,31 @@ export class ViewExaminationComponent implements OnInit, OnDestroy {
   exam: Examination | null = null;
   doctorProfile: DoctorProfile | null = null;
   reports: Report[] = [];
-  private pdfBusy = false;
+  loading = true;
+  pdfBusy = false;
   errorMessage = '';
   toastMessage = '';
+  isEditing = false;
+  saving = false;
+
+  editForm = {
+    patientName: '',
+    patientPhone: '',
+    patientAge: null as number | null,
+    anatomSite: '',
+    sex: '',
+    diagnosis: '',
+    treatment: '',
+    followUp: '',
+    riskLevel: '',
+    followUpDate: '',
+  };
+
   private destroy$ = new Subject<void>();
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private examinationService: ExaminationService,
     private reportService: ReportService,
     private cdr: ChangeDetectorRef
@@ -526,15 +897,18 @@ export class ViewExaminationComponent implements OnInit, OnDestroy {
   }
 
   loadExamination() {
+    this.loading = true;
     this.examinationService.getExamination(+this.examId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (exam) => {
           this.exam = exam;
+          this.loading = false;
           this.cdr.detectChanges();
         },
         error: (err) => {
           this.errorMessage = 'Failed to load examination.';
+          this.loading = false;
           this.cdr.detectChanges()
         }
       });
@@ -551,6 +925,92 @@ export class ViewExaminationComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.errorMessage = 'Failed to load reports.';
           this.cdr.detectChanges()
+        }
+      });
+  }
+
+  startEditing() {
+    if (!this.exam) return;
+    this.editForm = {
+      patientName: this.exam.patientName || '',
+      patientPhone: this.exam.patientPhone || '',
+      patientAge: this.exam.patientAge ?? null,
+      anatomSite: this.exam.anatomSite || '',
+      sex: this.exam.sex || '',
+      diagnosis: this.exam.diagnosis || '',
+      treatment: this.exam.treatment || '',
+      followUp: this.exam.followUp || '',
+      riskLevel: this.exam.riskLevel || '',
+      followUpDate: this.exam.followUpDate ? this.formatDate(this.exam.followUpDate) : '',
+    };
+    this.isEditing = true;
+  }
+
+  cancelEditing() {
+    this.isEditing = false;
+  }
+
+  saveChanges() {
+    if (this.saving) return;
+    if (!this.editForm.patientName.trim()) {
+      this.showToast('Patient name is required.');
+      return;
+    }
+    if (this.editForm.patientAge === null || this.editForm.patientAge < 0 || this.editForm.patientAge > 120) {
+      this.showToast('Patient age is required (0-120).');
+      return;
+    }
+    if (!this.editForm.anatomSite.trim()) {
+      this.showToast('Lesion location is required.');
+      return;
+    }
+    if (!this.editForm.sex.trim()) {
+      this.showToast('Patient gender is required.');
+      return;
+    }
+
+    this.saving = true;
+
+    const payload: UpdateExamination = {
+      patientName: this.editForm.patientName,
+      patientPhone: this.editForm.patientPhone || undefined,
+      patientAge: this.editForm.patientAge ?? undefined,
+      anatomSite: this.editForm.anatomSite || undefined,
+      sex: this.editForm.sex || undefined,
+      diagnosis: this.editForm.diagnosis || undefined,
+      treatment: this.editForm.treatment || undefined,
+      followUp: this.editForm.followUp || undefined,
+      riskLevel: this.editForm.riskLevel || undefined,
+      followUpDate: this.editForm.followUpDate ? new Date(this.editForm.followUpDate) : undefined,
+    };
+
+    this.examinationService.updateExamination(+this.examId, payload)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          // Reload full examination from server to ensure all navigation properties are fresh
+          this.examinationService.getExamination(+this.examId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (freshExam) => {
+                this.exam = freshExam;
+                this.isEditing = false;
+                this.saving = false;
+                this.showToast('Examination updated successfully');
+                this.cdr.detectChanges();
+              },
+              error: () => {
+                this.isEditing = false;
+                this.saving = false;
+                this.showToast('Examination updated successfully');
+                this.cdr.detectChanges();
+              }
+            });
+        },
+        error: () => {
+          this.saving = false;
+          this.showToast('Failed to update examination');
+          this.cdr.detectChanges();
         }
       });
   }
@@ -599,6 +1059,22 @@ export class ViewExaminationComponent implements OnInit, OnDestroy {
     });
   }
 
+  deleteExamination(): void {
+    if (!confirm('Are you sure you want to delete this examination? This action cannot be undone.')) return;
+
+    this.examinationService.deleteExamination(+this.examId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast('Examination deleted');
+          this.router.navigate(['/dashboard/examinations']);
+        },
+        error: () => {
+          this.showToast('Failed to delete examination');
+        }
+      });
+  }
+
   deleteReport(report: Report) {
     if (!confirm('Are you sure you want to delete this report?')) return;
 
@@ -615,9 +1091,22 @@ export class ViewExaminationComponent implements OnInit, OnDestroy {
 
   getImageUrl(filePath?: string): string {
     if (!filePath) return '';
-    // The API serves static files from wwwroot
     const baseUrl = environment.apiUrl.replace('/api', '');
     return `${baseUrl}/${filePath}`;
+  }
+
+  getHeatmapUrl(heatmapPath?: string): string {
+    if (!heatmapPath) return '';
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    return `${baseUrl}/${heatmapPath}`;
+  }
+
+  private formatDate(date: Date | string): string {
+    const d = date instanceof Date ? date : new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private triggerDownload(blob: Blob, fileName: string) {

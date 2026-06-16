@@ -41,8 +41,14 @@ interface SparkDay {
         </a>
       </div>
 
+      <!-- Loading -->
+      <div *ngIf="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading dashboard...</p>
+      </div>
+
       <!-- KPI Cards -->
-      <div class="stats-grid">
+      <div class="stats-grid" *ngIf="!loading">
         <div class="stat-card">
           <div class="stat-icon">📋</div>
           <div class="stat-content">
@@ -67,7 +73,7 @@ interface SparkDay {
       </div>
 
       <!-- Main content: list LEFT, charts RIGHT -->
-      <div class="content-grid">
+      <div class="content-grid" *ngIf="!loading">
 
         <!-- Recent Examinations -->
         <div class="section">
@@ -85,7 +91,7 @@ interface SparkDay {
               <div *ngFor="let exam of recentExaminations" class="exam-card">
                 <div class="exam-info">
                   <h4>{{ exam.patientName }}</h4>
-                  <p class="reason">{{ exam.reason }}</p>
+                  <p class="reason">{{ exam.anatomSite || exam.diagnosis }}</p>
                   <p class="date">{{ exam.createdAt | date:'mediumDate' }}</p>
                 </div>
                 <div class="exam-meta">
@@ -571,6 +577,7 @@ interface SparkDay {
 export class DoctorDashboardComponent implements OnInit, OnDestroy {
   doctorName = '';
   clinicName = '';
+  loading = true;
   stats: ExaminationStats = { total: 0, today: 0, aiAnalyses: 0 };
   recentExaminations: ExaminationListItem[] = [];
   allExaminations: ExaminationListItem[] = [];
@@ -599,7 +606,7 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
     private examinationService: ExaminationService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadUserData();
@@ -629,6 +636,7 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
           this.allExaminations = exams;
           this.recentExaminations = exams.slice(0, 5);
           this.errorMessage = '';
+          this.loading = false;
           this.buildDonut();
           this.buildSparkline();
           this.cdr.detectChanges();
@@ -636,6 +644,7 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error(err);
           this.errorMessage = 'Failed to load dashboard data';
+          this.loading = false;
           this.cdr.detectChanges();
         }
       });
@@ -652,9 +661,9 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
 
     const total = this.allExaminations.length;
     const palette = [
-      { key: 'low',    label: 'Low',    color: '#22c55e' },
+      { key: 'low', label: 'Low', color: '#22c55e' },
       { key: 'medium', label: 'Medium', color: '#f59e0b' },
-      { key: 'high',   label: 'High',   color: '#ef4444' },
+      { key: 'high', label: 'High', color: '#ef4444' },
     ] as const;
 
     let cumulative = 0;

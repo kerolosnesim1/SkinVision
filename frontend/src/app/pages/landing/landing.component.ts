@@ -127,7 +127,7 @@ import { User } from '../../models/models';
             <div class="step-number">01</div>
             <div class="step-content">
               <h3>Start Examination</h3>
-              <p>Enter patient details and reason for visit</p>
+              <p>Enter patient details and lesion location</p>
             </div>
           </div>
           <div class="workflow-connector"></div>
@@ -200,7 +200,7 @@ import { User } from '../../models/models';
         <div class="ai-image-wrapper">
           <img
             src="/assets/images/AiSection.webp"
-            alt="Deep learning dermatology heatmap visualization"
+            alt="ai section image"
             loading="lazy"
           />
         </div>
@@ -604,46 +604,18 @@ import { User } from '../../models/models';
   width: 100%;
   max-width: 620px;
 }
-
-.ai-image-wrapper::before {
-  content: '';
-  position: absolute;
-  inset: -20px;
-  background: radial-gradient(
-    circle,
-    rgba(43, 177, 184, 0.12) 0%,
-    rgba(22, 125, 126, 0.08) 35%,
-    transparent 70%
-  );
-  filter: blur(40px);
-  z-index: 0;
-}
-
 .ai-image-wrapper img {
   position: relative;
   z-index: 2;
   width: 100%;
   height: auto;
   display: block;
-
-  border-radius: 24px;
-
-  background: #FCFDFE;
-
-  box-shadow:
-    0 30px 60px rgba(22, 125, 126, 0.12),
-    0 10px 25px rgba(22, 125, 126, 0.08);
-
+  border-radius: 16px;
   transition: transform 0.4s ease,
               box-shadow 0.4s ease;
 }
-
 .ai-image-wrapper img:hover {
-  transform: translateY(-6px) scale(1.01);
-
-  box-shadow:
-    0 40px 80px rgba(22, 125, 126, 0.18),
-    0 15px 35px rgba(22, 125, 126, 0.12);
+  transform: translateY(-4px);
 }
     .ai-section {
       padding: 100px 0;

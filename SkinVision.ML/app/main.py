@@ -1,60 +1,107 @@
+"""FastAPI entry-point for the SkinVision ML ensemble service.
+
+Loads three models at startup:
+  • ISIC_HRNet  (03_HRNet_Dullrazor.pth)
+  • ISIC_Swin   (04_Swin_Dullrazor.pth)
+  • XGBoost meta-classifier (05_XGBoost_Meta_Classifier.joblib)
+
+The /predict endpoint accepts an image + patient metadata, runs the
+ensemble, and returns classification + optional Grad-CAM heatmap.
+"""
+
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import joblib
 import torch
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.model import ISIC_Hybrid_Net
-from app.inference import preprocess_image, build_meta_tensor, predict
+from app.model import ISIC_HRNet, ISIC_Swin
+from app.inference import (
+    preprocess_image,
+    build_meta_tensor,
+    predict,
+    generate_heatmap_base64,
+)
 from app.schemas import PredictResponse, HealthResponse
 
-_DEFAULT_WEIGHTS = "EfficientNet_B3_model.pth"
-MODEL_PATH = Path(
-    os.environ.get(
-        "SKINVISION_MODEL_PATH",
-        str(Path(__file__).resolve().parent.parent / "model" / _DEFAULT_WEIGHTS),
-    )
-)
+# ── Model weight paths ──────────────────────────────────────────────
+_MODEL_DIR = Path(os.environ.get(
+    "SKINVISION_MODEL_DIR",
+    str(Path(__file__).resolve().parent.parent / "model"),
+))
+
+HRNET_WEIGHTS = _MODEL_DIR / "03_HRNet_Dullrazor.pth"
+SWIN_WEIGHTS = _MODEL_DIR / "04_Swin_Dullrazor.pth"
+XGB_WEIGHTS = _MODEL_DIR / "05_XGBoost_Meta_Classifier.joblib"
+
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"}
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 MB
 
-_state: dict = {"model": None, "device": None, "weights_file": ""}
+_state: dict = {
+    "hrnet_model": None,
+    "swin_model": None,
+    "xgb_model": None,
+    "device": None,
+}
 
 
-def _load_model() -> None:
+def _load_models() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = ISIC_Hybrid_Net(num_classes=9, num_heads=1)
 
-    if not MODEL_PATH.exists():
-        raise FileNotFoundError(f"Model weights not found at {MODEL_PATH}")
+    # ── HRNet ────────────────────────────────────────────────────────
+    if not HRNET_WEIGHTS.exists():
+        raise FileNotFoundError(f"HRNet weights not found at {HRNET_WEIGHTS}")
+    hrnet = ISIC_HRNet(num_classes=9, meta_features_count=3, pretrained=False)
+    hrnet.load_state_dict(
+        torch.load(HRNET_WEIGHTS, map_location=device, weights_only=True)
+    )
+    hrnet.to(device)
+    hrnet.eval()
 
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=device, weights_only=True))
-    model.to(device)
-    model.eval()
+    # ── Swin ─────────────────────────────────────────────────────────
+    if not SWIN_WEIGHTS.exists():
+        raise FileNotFoundError(f"Swin weights not found at {SWIN_WEIGHTS}")
+    swin = ISIC_Swin(num_classes=9, meta_features_count=3)
+    # Swin-V2-T downloads pretrained backbone weights on first init;
+    # we then overwrite with our fine-tuned checkpoint.
+    swin.load_state_dict(
+        torch.load(SWIN_WEIGHTS, map_location=device, weights_only=True)
+    )
+    swin.to(device)
+    swin.eval()
 
-    _state["model"] = model
+    # ── XGBoost ──────────────────────────────────────────────────────
+    if not XGB_WEIGHTS.exists():
+        raise FileNotFoundError(f"XGBoost weights not found at {XGB_WEIGHTS}")
+    xgb = joblib.load(XGB_WEIGHTS)
+
+    _state["hrnet_model"] = hrnet
+    _state["swin_model"] = swin
+    _state["xgb_model"] = xgb
     _state["device"] = device
-    _state["weights_file"] = MODEL_PATH.name
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    _load_model()
+    _load_models()
     yield
-    _state["model"] = None
+    _state["hrnet_model"] = None
+    _state["swin_model"] = None
+    _state["xgb_model"] = None
     _state["device"] = None
-    _state["weights_file"] = ""
 
 
 app = FastAPI(
     title="SkinVision ML Service",
     description=(
-        "Skin lesion classification — EfficientNet-B3 hybrid (meta projection + attention). "
-        f"Default weights: {_DEFAULT_WEIGHTS}. Override path with SKINVISION_MODEL_PATH."
+        "Skin lesion classification — HRNet-W32 + Swin-V2-T ensemble "
+        "with XGBoost meta-classifier and Dullrazor preprocessing. "
+        f"Model directory: {_MODEL_DIR}"
     ),
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -83,16 +130,22 @@ async def predict_endpoint(
     if len(image_bytes) == 0:
         raise HTTPException(400, "Empty file")
 
-    model = _state["model"]
+    hrnet = _state["hrnet_model"]
+    swin = _state["swin_model"]
+    xgb = _state["xgb_model"]
     device = _state["device"]
-    if model is None:
-        raise HTTPException(503, "Model not loaded")
+    if hrnet is None or swin is None or xgb is None:
+        raise HTTPException(503, "Models not loaded")
 
     try:
         image_tensor = preprocess_image(image_bytes)
         meta_tensor = build_meta_tensor(age, sex, anatom_site)
         class_code, class_full, confidence, class_idx, all_probs, ent = predict(
-            model, image_tensor, meta_tensor, device
+            hrnet, swin, xgb, image_tensor, meta_tensor, device
+        )
+
+        heatmap_b64 = generate_heatmap_base64(
+            hrnet, image_tensor, meta_tensor, class_idx, device
         )
     except Exception as e:
         raise HTTPException(500, f"Prediction failed: {str(e)}")
@@ -104,14 +157,20 @@ async def predict_endpoint(
         class_index=class_idx,
         all_probabilities=[round(p, 4) for p in all_probs],
         prediction_entropy=round(ent, 4),
+        heatmap_base64=heatmap_b64,
     )
 
 
 @app.get("/health", response_model=HealthResponse)
 def health():
+    models_loaded = (
+        _state["hrnet_model"] is not None
+        and _state["swin_model"] is not None
+        and _state["xgb_model"] is not None
+    )
     return HealthResponse(
-        status="ok" if _state["model"] is not None else "model_not_loaded",
-        model_loaded=_state["model"] is not None,
+        status="ok" if models_loaded else "models_not_loaded",
+        models_loaded=models_loaded,
         device=str(_state["device"]) if _state["device"] else "none",
-        weights_file=_state.get("weights_file") or "",
+        model_dir=str(_MODEL_DIR),
     )
