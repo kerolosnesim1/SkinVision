@@ -80,6 +80,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Register Unit of Work (Infrastructure)
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+// Register JWT token service (Infrastructure)
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+
 // Register services (Application)
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IExaminationService, ExaminationService>();

@@ -21,6 +21,7 @@ public class UserRepository : BaseRepository<User>, IUserRepository
     public async Task<User?> FindByPasswordResetTokenAsync(string token)
     {
         return await _context.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.PasswordResetToken == token);
     }
 }

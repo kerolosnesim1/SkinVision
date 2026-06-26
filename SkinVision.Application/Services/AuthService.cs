@@ -1,15 +1,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using SkinVision.Application.DTOs;
 using SkinVision.Application.Interfaces.Repositories;
 using SkinVision.Application.Interfaces.Services;
 using SkinVision.Domain.Entities;
 using SkinVision.Domain.Enums;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace SkinVision.Application.Services;
 
@@ -19,17 +15,20 @@ public class AuthService : IAuthService
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
     private readonly IEmailService _emailService;
+    private readonly IJwtTokenService _jwtTokenService;
 
     public AuthService(
         IUnitOfWork unitOfWork,
         IConfiguration configuration,
         ILogger<AuthService> logger,
-        IEmailService emailService)
+        IEmailService emailService,
+        IJwtTokenService jwtTokenService)
     {
         _unitOfWork = unitOfWork;
         _configuration = configuration;
         _logger = logger;
         _emailService = emailService;
+        _jwtTokenService = jwtTokenService;
     }
 
     public async Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request)
@@ -57,7 +56,7 @@ public class AuthService : IAuthService
 
         await _unitOfWork.SaveChangesAsync();
 
-        var token = GenerateJwtToken(user);
+        var token = _jwtTokenService.GenerateToken(user);
 
         _logger.LogInformation("Registered new {Role} user {UserId}", user.Role, user.UserId);
 
@@ -98,10 +97,9 @@ public class AuthService : IAuthService
 
         // Update last login timestamp
         user.LastLoginAt = DateTime.UtcNow;
-        await _unitOfWork.Users.UpdateAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
-        var token = GenerateJwtToken(user);
+        var token = _jwtTokenService.GenerateToken(user);
         _logger.LogInformation("User {UserId} logged in successfully", user.UserId);
 
         return new LoginResponseDto
@@ -129,7 +127,6 @@ public class AuthService : IAuthService
             
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-        await _unitOfWork.Users.UpdateAsync(user);
         await _unitOfWork.SaveChangesAsync();
         _logger.LogInformation("Password changed successfully for user {UserId}", userId);
         return true;
@@ -145,7 +142,6 @@ public class AuthService : IAuthService
         var token = GeneratePasswordResetToken();
         user.PasswordResetToken = token;
         user.PasswordResetTokenExpires = DateTime.UtcNow.AddHours(1);
-        await _unitOfWork.Users.UpdateAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var frontendBaseUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:4200";
@@ -185,7 +181,6 @@ public class AuthService : IAuthService
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.PasswordResetToken = null;
         user.PasswordResetTokenExpires = null;
-        await _unitOfWork.Users.UpdateAsync(user);
         await _unitOfWork.SaveChangesAsync();
         _logger.LogInformation("Password reset completed for user {UserId}", user.UserId);
         return (true, null);
@@ -220,33 +215,5 @@ public class AuthService : IAuthService
                 YearsExperience = user.DoctorProfile.YearsExperience,
             }
         };
-    }
-
-    private string GenerateJwtToken(User user)
-    {
-        var keyString = string.IsNullOrEmpty(_configuration["Jwt:Key"])
-            ? "SkinVision_Default_Secret_Key_2026!"
-            : _configuration["Jwt:Key"]!;
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
-
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, (user.Role ?? UserRole.Doctor).ToString())
-        };
-
-        var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"] ?? "SkinVision",
-            audience: _configuration["Jwt:Audience"] ?? "SkinVision",
-            claims: claims,
-            expires: DateTime.UtcNow.AddDays(7),
-            signingCredentials: credentials
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

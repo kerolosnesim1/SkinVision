@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SkinVision.Application.Interfaces.Repositories;
+using SkinVision.Application.Interfaces.Services;
 using SkinVision.Application.Services;
 using SkinVision.Domain.Entities;
 using SkinVision.Domain.Enums;
@@ -13,6 +14,7 @@ public class GoogleOAuthServiceTests
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IConfiguration> _configurationMock = new();
     private readonly Mock<ILogger<GoogleOAuthService>> _loggerMock = new();
+    private readonly Mock<IJwtTokenService> _jwtTokenServiceMock = new();
     private readonly Mock<IUserRepository> _userRepoMock = new();
     private readonly Mock<IExternalLoginRepository> _externalLoginRepoMock = new();
     private readonly GoogleOAuthService _oauthService;
@@ -27,9 +29,11 @@ public class GoogleOAuthServiceTests
         _configurationMock.Setup(c => c["Jwt:Issuer"]).Returns("SkinVision");
         _configurationMock.Setup(c => c["Jwt:Audience"]).Returns("SkinVision");
 
+        _jwtTokenServiceMock.Setup(j => j.GenerateToken(It.IsAny<User>())).Returns("test-token");
+
         _oauthService = new GoogleOAuthService(
             _unitOfWorkMock.Object,
-            _configurationMock.Object,
+            _jwtTokenServiceMock.Object,
             _loggerMock.Object);
     }
 

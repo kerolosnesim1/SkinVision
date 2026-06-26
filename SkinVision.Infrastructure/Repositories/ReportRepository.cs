@@ -14,6 +14,7 @@ public class ReportRepository : BaseRepository<Report>, IReportRepository
     public async Task<List<Report>> GetByExaminationIdAsync(int diagnosisId)
     {
         return await _context.Reports
+            .AsNoTracking()
             .Where(r => r.DiagnosisId == diagnosisId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
@@ -22,6 +23,7 @@ public class ReportRepository : BaseRepository<Report>, IReportRepository
     public async Task<List<Report>> GetByDoctorIdAsync(int doctorId)
     {
         return await _context.Reports
+            .AsNoTracking()
             .Include(r => r.Examination)
             .Where(r => r.Examination.DoctorId == doctorId)
             .OrderByDescending(r => r.CreatedAt)
@@ -31,6 +33,7 @@ public class ReportRepository : BaseRepository<Report>, IReportRepository
     public async Task<Report?> GetByIdWithExaminationAsync(int reportId)
     {
         return await _context.Reports
+            .AsNoTracking()
             .Include(r => r.Examination)
             .FirstOrDefaultAsync(r => r.ReportId == reportId);
     }

@@ -44,12 +44,8 @@ public class UnitOfWork : IUnitOfWork
 
     public void Dispose()
     {
-        _context.Dispose();
+        // DbContext lifetime is managed by the DI container.
     }
 
-    public IBaseRepository<T> BaseRepository<T>() where T : class
-    {
-        throw new NotImplementedException();
-    }
 }
 

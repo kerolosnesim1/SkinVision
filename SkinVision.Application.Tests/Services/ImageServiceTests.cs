@@ -12,26 +12,26 @@ namespace SkinVision.Application.Tests.Services;
 public class ImageServiceTests
 {
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
-    private readonly Mock<IExaminationService> _examinationServiceMock = new();
     private readonly Mock<IFileStorageService> _fileStorageMock = new();
     private readonly Mock<IDlPredictionService> _dlPredictionMock = new();
     private readonly Mock<IImageRepository> _imageRepoMock = new();
+    private readonly Mock<IExaminationRepository> _examinationRepoMock = new();
     private readonly ImageService _imageService;
 
     public ImageServiceTests()
     {
         _unitOfWorkMock.Setup(u => u.Images).Returns(_imageRepoMock.Object);
+        _unitOfWorkMock.Setup(u => u.Examinations).Returns(_examinationRepoMock.Object);
         _unitOfWorkMock.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
 
         _imageService = new ImageService(
             _unitOfWorkMock.Object,
-            _examinationServiceMock.Object,
             _fileStorageMock.Object,
             _dlPredictionMock.Object,
             NullLogger<ImageService>.Instance);
     }
 
-    private static ExaminationDto CreateExamination(int doctorId = 10, int examinationId = 1) => new()
+    private static Examination CreateExamination(int doctorId = 10, int examinationId = 1) => new()
     {
         DiagnosisId = examinationId,
         DoctorId = doctorId,
@@ -45,8 +45,8 @@ public class ImageServiceTests
     [Fact]
     public async Task AddImageAsync_WithWrongDoctor_ReturnsNull()
     {
-        _examinationServiceMock
-            .Setup(s => s.GetExaminationAsync(1))
+        _examinationRepoMock
+            .Setup(r => r.GetByIdWithDetailsAsync(1))
             .ReturnsAsync(CreateExamination(doctorId: 10));
 
         using var stream = new MemoryStream([1, 2, 3]);
@@ -61,8 +61,8 @@ public class ImageServiceTests
     [Fact]
     public async Task AddImageAsync_WithValidExam_SavesImageAndReturnsDto()
     {
-        _examinationServiceMock
-            .Setup(s => s.GetExaminationAsync(1))
+        _examinationRepoMock
+            .Setup(r => r.GetByIdWithDetailsAsync(1))
             .ReturnsAsync(CreateExamination());
         _fileStorageMock
             .Setup(f => f.SaveFileAsync(It.IsAny<Stream>(), "test.jpg", "image/jpeg"))
@@ -93,8 +93,8 @@ public class ImageServiceTests
     [Fact]
     public async Task AddImageAsync_WhenPredictionFails_StillSavesImageWithoutAiResult()
     {
-        _examinationServiceMock
-            .Setup(s => s.GetExaminationAsync(1))
+        _examinationRepoMock
+            .Setup(r => r.GetByIdWithDetailsAsync(1))
             .ReturnsAsync(CreateExamination());
         _fileStorageMock
             .Setup(f => f.SaveFileAsync(It.IsAny<Stream>(), "test.jpg", "image/jpeg"))
@@ -123,8 +123,8 @@ public class ImageServiceTests
     [Fact]
     public async Task AddImageOnlyAsync_WithWrongDoctor_ReturnsNull()
     {
-        _examinationServiceMock
-            .Setup(s => s.GetExaminationAsync(1))
+        _examinationRepoMock
+            .Setup(r => r.GetByIdWithDetailsAsync(1))
             .ReturnsAsync(CreateExamination(doctorId: 10));
 
         using var stream = new MemoryStream([1, 2, 3]);
@@ -160,8 +160,8 @@ public class ImageServiceTests
             AiResult = existingPrediction
         };
 
-        _examinationServiceMock
-            .Setup(s => s.GetExaminationAsync(1))
+        _examinationRepoMock
+            .Setup(r => r.GetByIdWithDetailsAsync(1))
             .ReturnsAsync(CreateExamination());
         _imageRepoMock.Setup(r => r.GetByIdAsync(3)).ReturnsAsync(image);
 
@@ -183,8 +183,8 @@ public class ImageServiceTests
     [Fact]
     public async Task AnalyzeImageAsync_WithMissingImage_ReturnsNull()
     {
-        _examinationServiceMock
-            .Setup(s => s.GetExaminationAsync(1))
+        _examinationRepoMock
+            .Setup(r => r.GetByIdWithDetailsAsync(1))
             .ReturnsAsync(CreateExamination());
         _imageRepoMock.Setup(r => r.GetByIdAsync(99)).ReturnsAsync((ExaminationImage?)null);
 

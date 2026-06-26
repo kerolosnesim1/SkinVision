@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Logging;
 using Moq;
 using SkinVision.Application.DTOs;
 using SkinVision.Application.Interfaces.Repositories;
+using SkinVision.Application.Interfaces.Services;
 using SkinVision.Application.Services;
 using SkinVision.Domain.Entities;
 using SkinVision.Domain.Enums;
@@ -8,13 +10,14 @@ using Xunit;
 
  
 
-namespace SkinVision.Application.Tests.Services; 
+namespace SkinVision.Application.Tests.Services;
 
 public class ExaminationServiceTests
  {
     private readonly Mock<IUnitOfWork> _unitOfWork;
     private readonly Mock<IExaminationRepository> _examinationRepo;
-    private readonly ExaminationService _examinationService; 
+    private readonly Mock<IFileStorageService> _fileStorageService;
+    private readonly ExaminationService _examinationService;
 
     public ExaminationServiceTests()
     {
@@ -22,7 +25,13 @@ public class ExaminationServiceTests
         _unitOfWork = new Mock<IUnitOfWork>();
         _unitOfWork.Setup(u => u.Examinations).Returns(_examinationRepo.Object);
         _unitOfWork.Setup(u => u.SaveChangesAsync()).ReturnsAsync(1);
-        _examinationService = new ExaminationService(_unitOfWork.Object);
+        _fileStorageService = new Mock<IFileStorageService>();
+        _fileStorageService.Setup(f => f.DeleteFileAsync(It.IsAny<string>())).ReturnsAsync(true);
+        var logger = new Mock<ILogger<ExaminationService>>();
+        _examinationService = new ExaminationService(
+            _unitOfWork.Object,
+            _fileStorageService.Object,
+            logger.Object);
     }
 
  
@@ -156,28 +165,29 @@ public class ExaminationServiceTests
     {
         // Arrange
         var examination = new Examination { DiagnosisId = 1, DoctorId = 10 };
-        _examinationRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(examination); 
+        _examinationRepo.Setup(r => r.GetByIdWithDetailsAsync(1)).ReturnsAsync(examination);
 
         // Act
-        var result = await _examinationService.DeleteExaminationAsync(5, 1); 
+        var result = await _examinationService.DeleteExaminationAsync(5, 1);
 
         // Assert
         Assert.False(result);
-    } 
+    }
 
     [Fact]
     public async Task DeleteExaminationAsync_WithCorrectDoctor_ReturnsTrue()
     {
         // Arrange
         var examination = new Examination { DiagnosisId = 1, DoctorId = 10 };
-        _examinationRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(examination); 
+        _examinationRepo.Setup(r => r.GetByIdWithDetailsAsync(1)).ReturnsAsync(examination);
+        _examinationRepo.Setup(r => r.DeleteByIdAsync(1)).Returns(Task.CompletedTask);
 
         // Act
-        var result = await _examinationService.DeleteExaminationAsync(10, 1); 
+        var result = await _examinationService.DeleteExaminationAsync(10, 1);
 
         // Assert
         Assert.True(result);
-    } 
+    }
 
     [Fact]
     public async Task GetStatsAsync_ShouldReturnCorrectStats()

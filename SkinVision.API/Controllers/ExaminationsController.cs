@@ -44,12 +44,11 @@ public class ExaminationsController : BaseApiController
         if (doctorId == null)
             return Unauthorized();
 
-        var examination = await _examinationService.GetExaminationAsync(id);
+        // Use the doctor-scoped lookup so authorization is enforced inside the
+        // service rather than after loading the record (prevents IDOR).
+        var examination = await _examinationService.GetExaminationForDoctorAsync(doctorId.Value, id);
         if (examination == null)
             return NotFound();
-
-        if (examination.DoctorId != doctorId.Value)
-            return Forbid();
 
         return Ok(examination);
     }
@@ -87,10 +86,11 @@ public class ExaminationsController : BaseApiController
             return BadRequest("Image file extension does not match the uploaded content type.");
         }
 
+        await using var uploadStream = file.OpenReadStream();
         var result = await _imageService.AddImageAsync(
             doctorId.Value,
             id,
-            file.OpenReadStream(),
+            uploadStream,
             file.FileName,
             file.ContentType,
             file.Length);
@@ -123,10 +123,11 @@ public class ExaminationsController : BaseApiController
             return BadRequest("Image file extension does not match the uploaded content type.");
         }
 
+        await using var uploadStream = file.OpenReadStream();
         var result = await _imageService.AddImageOnlyAsync(
             doctorId.Value,
             id,
-            file.OpenReadStream(),
+            uploadStream,
             file.FileName,
             file.ContentType,
             file.Length);

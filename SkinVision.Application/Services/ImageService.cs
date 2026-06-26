@@ -9,20 +9,17 @@ namespace SkinVision.Application.Services;
 public class ImageService : IImageService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IExaminationService _examinationService;
     private readonly IFileStorageService _fileStorageService;
     private readonly IDlPredictionService _dlPredictionService;
     private readonly ILogger<ImageService> _logger;
 
     public ImageService(
        IUnitOfWork unitOfWork,
-       IExaminationService examinationService,
        IFileStorageService fileStorageService,
        IDlPredictionService dlPredictionService,
        ILogger<ImageService> logger)
     {
         _unitOfWork = unitOfWork;
-        _examinationService = examinationService;
         _fileStorageService = fileStorageService;
         _dlPredictionService = dlPredictionService;
         _logger = logger;
@@ -30,7 +27,7 @@ public class ImageService : IImageService
 
     public async Task<ImageDto?> AddImageAsync(int doctorId, int examinationId, Stream fileStream, string fileName, string contentType, long fileSizeBytes)
     {
-        var exam = await _examinationService.GetExaminationAsync(examinationId);
+        var exam = await _unitOfWork.Examinations.GetByIdWithDetailsAsync(examinationId);
         if (exam == null || exam.DoctorId != doctorId)
         {
             _logger.LogWarning(
@@ -115,7 +112,7 @@ public class ImageService : IImageService
 
     public async Task<ImageDto?> AddImageOnlyAsync(int doctorId, int examinationId, Stream fileStream, string fileName, string contentType, long fileSizeBytes)
     {
-        var exam = await _examinationService.GetExaminationAsync(examinationId);
+        var exam = await _unitOfWork.Examinations.GetByIdWithDetailsAsync(examinationId);
         if (exam == null || exam.DoctorId != doctorId)
         {
             _logger.LogWarning(
@@ -164,7 +161,7 @@ public class ImageService : IImageService
 
     public async Task<PredictionDto?> AnalyzeImageAsync(int doctorId, int examinationId, int imageId)
     {
-        var exam = await _examinationService.GetExaminationAsync(examinationId);
+        var exam = await _unitOfWork.Examinations.GetByIdWithDetailsAsync(examinationId);
         if (exam == null || exam.DoctorId != doctorId)
         {
             _logger.LogWarning(

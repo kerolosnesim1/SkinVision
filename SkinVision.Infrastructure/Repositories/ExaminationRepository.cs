@@ -14,6 +14,7 @@ public class ExaminationRepository : BaseRepository<Examination>, IExaminationRe
     public async Task<Examination?> GetByIdWithDetailsAsync(int id)
     {
         return await _context.Examinations
+            .AsNoTracking()
             .Include(e => e.Images)
                 .ThenInclude(i => i.AiResult)
             .Include(e => e.Doctor)
@@ -23,7 +24,7 @@ public class ExaminationRepository : BaseRepository<Examination>, IExaminationRe
 
     public async Task<List<Examination>> GetFilteredAsync(int? doctorId, string? searchQuery, string? riskLevel, DateOnly? date = null)
     {
-        var query = _context.Examinations.AsQueryable();
+        var query = _context.Examinations.AsNoTracking();
 
         if (doctorId.HasValue)
             query = query.Where(e => e.DoctorId == doctorId.Value);

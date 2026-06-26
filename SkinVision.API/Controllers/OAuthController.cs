@@ -1,11 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using SkinVision.Application.Interfaces.Services;
 using SkinVision.Application.Interfaces.Repositories;
 
@@ -15,17 +12,20 @@ public class OAuthController : BaseApiController
 {
     private readonly IOAuthService _oAuthService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IJwtTokenService _jwtTokenService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<OAuthController> _logger;
 
     public OAuthController(
         IOAuthService oAuthService,
         IUnitOfWork unitOfWork,
+        IJwtTokenService jwtTokenService,
         IConfiguration configuration,
         ILogger<OAuthController> logger)
     {
         _oAuthService = oAuthService;
         _unitOfWork = unitOfWork;
+        _jwtTokenService = jwtTokenService;
         _configuration = configuration;
         _logger = logger;
     }
@@ -113,7 +113,7 @@ public class OAuthController : BaseApiController
             return Redirect($"{frontendBaseUrl}/auth/callback?error=missing_token");
         }
 
-        var userId = ValidateTokenAndGetUserId(token);
+        var userId = _jwtTokenService.ValidateAndGetUserId(token);
         if (userId == null)
         {
             return Redirect($"{frontendBaseUrl}/auth/callback?error=invalid_token");
@@ -219,42 +219,5 @@ public class OAuthController : BaseApiController
         _logger.LogInformation("Unlinked Google account for user {UserId}", userId.Value);
 
         return Ok(new { message = "Google account unlinked successfully" });
-    }
-
-    /// <summary>
-    /// Validates a JWT token passed as a query parameter and extracts the user ID.
-    /// Used for the LinkGoogle flow where the token can't be sent as an Authorization header.
-    /// </summary>
-    private int? ValidateTokenAndGetUserId(string token)
-    {
-        var keyString = string.IsNullOrEmpty(_configuration["Jwt:Key"])
-            ? "SkinVision_Default_Secret_Key_2026!"
-            : _configuration["Jwt:Key"]!;
-
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
-
-        var handler = new JwtSecurityTokenHandler();
-        var parameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = _configuration["Jwt:Issuer"] ?? "SkinVision",
-            ValidateAudience = true,
-            ValidAudience = _configuration["Jwt:Audience"] ?? "SkinVision",
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = key
-        };
-
-        try
-        {
-            var principal = handler.ValidateToken(token, parameters, out _);
-            var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return int.TryParse(userIdClaim, out var id) ? id : null;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Invalid JWT token provided for Google account linking");
-            return null;
-        }
     }
 }

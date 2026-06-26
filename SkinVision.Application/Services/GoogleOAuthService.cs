@@ -1,30 +1,25 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using SkinVision.Application.DTOs;
 using SkinVision.Application.Interfaces.Repositories;
 using SkinVision.Application.Interfaces.Services;
 using SkinVision.Domain.Entities;
 using SkinVision.Domain.Enums;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace SkinVision.Application.Services;
 
 public class GoogleOAuthService : IOAuthService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IConfiguration _configuration;
+    private readonly IJwtTokenService _jwtTokenService;
     private readonly ILogger<GoogleOAuthService> _logger;
 
     public GoogleOAuthService(
         IUnitOfWork unitOfWork,
-        IConfiguration configuration,
+        IJwtTokenService jwtTokenService,
         ILogger<GoogleOAuthService> logger)
     {
         _unitOfWork = unitOfWork;
-        _configuration = configuration;
+        _jwtTokenService = jwtTokenService;
         _logger = logger;
     }
 
@@ -36,7 +31,7 @@ public class GoogleOAuthService : IOAuthService
         if (externalLogin is not null)
         {
             var user = externalLogin.User;
-            var token = GenerateJwtToken(user);
+            var token = _jwtTokenService.GenerateToken(user);
 
             _logger.LogInformation(
                 "OAuth login for existing external login: Provider={Provider}, UserId={UserId}",
@@ -97,7 +92,7 @@ public class GoogleOAuthService : IOAuthService
         await _unitOfWork.ExternalLogins.AddAsync(newExternalLogin);
         await _unitOfWork.SaveChangesAsync();
 
-        var newToken = GenerateJwtToken(newUser);
+        var newToken = _jwtTokenService.GenerateToken(newUser);
 
         _logger.LogInformation(
             "OAuth auto-registered new user: Provider={Provider}, UserId={UserId}, Email={Email}",
@@ -150,34 +145,6 @@ public class GoogleOAuthService : IOAuthService
             provider, userId);
 
         return true;
-    }
-
-    private string GenerateJwtToken(User user)
-    {
-        var keyString = string.IsNullOrEmpty(_configuration["Jwt:Key"])
-            ? "SkinVision_Default_Secret_Key_2026!"
-            : _configuration["Jwt:Key"]!;
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
-
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, (user.Role ?? UserRole.Doctor).ToString())
-        };
-
-        var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"] ?? "SkinVision",
-            audience: _configuration["Jwt:Audience"] ?? "SkinVision",
-            claims: claims,
-            expires: DateTime.UtcNow.AddDays(7),
-            signingCredentials: credentials
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     private static UserDto MapToUserDto(User user)

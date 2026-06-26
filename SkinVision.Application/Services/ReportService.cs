@@ -100,20 +100,6 @@ public class ReportService : IReportService
         return true;
     }
 
-    public async Task<(Stream? Stream, string? FileName)?> DownloadReportAsync(int doctorId, int reportId)
-    {
-        var report = await _unitOfWork.Reports.GetByIdWithExaminationAsync(reportId);
-        if (report == null || report.Examination.DoctorId != doctorId)
-            return null;
-
-        if (string.IsNullOrEmpty(report.ReportPath))
-            return null;
-
-        // The file storage service saves to wwwroot, so we reconstruct the full path
-        // This will be resolved by the controller using IWebHostEnvironment
-        return (null, report.ReportPath);
-    }
-
     private static ReportDto MapToDto(Report report)
     {
         return new ReportDto

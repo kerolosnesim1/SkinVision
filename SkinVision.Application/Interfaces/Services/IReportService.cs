@@ -9,5 +9,4 @@ public interface IReportService
     Task<List<ReportDto>> GetReportsForExaminationAsync(int doctorId, int examinationId);
     Task<List<ReportDto>> GetAllReportsAsync(int doctorId);
     Task<bool> DeleteReportAsync(int doctorId, int reportId);
-    Task<(Stream? Stream, string? FileName)?> DownloadReportAsync(int doctorId, int reportId);
 }

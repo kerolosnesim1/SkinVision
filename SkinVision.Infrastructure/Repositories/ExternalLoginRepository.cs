@@ -17,6 +17,7 @@ public class ExternalLoginRepository : IExternalLoginRepository
     public async Task<ExternalLogin?> FindByProviderAsync(string provider, string providerUserId)
     {
         return await _context.ExternalLogins
+            .AsNoTracking()
             .Include(e => e.User)
                 .ThenInclude(u => u.DoctorProfile)
             .FirstOrDefaultAsync(e => e.Provider == provider && e.ProviderUserId == providerUserId);
@@ -25,6 +26,7 @@ public class ExternalLoginRepository : IExternalLoginRepository
     public async Task<List<ExternalLogin>> FindByUserIdAsync(int userId)
     {
         return await _context.ExternalLogins
+            .AsNoTracking()
             .Where(e => e.UserId == userId)
             .ToListAsync();
     }

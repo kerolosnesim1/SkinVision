@@ -17,6 +17,7 @@ public class AuthServiceTests
     private readonly Mock<IConfiguration> _configurationMock;
     private readonly Mock<ILogger<AuthService>> _loggerMock;
     private readonly Mock<IEmailService> _emailServiceMock;
+    private readonly Mock<IJwtTokenService> _jwtTokenServiceMock;
     private readonly Mock<IUserRepository> _userRepoMock;
     private readonly AuthService _authService;
 
@@ -26,6 +27,7 @@ public class AuthServiceTests
         _configurationMock = new Mock<IConfiguration>();
         _loggerMock = new Mock<ILogger<AuthService>>();
         _emailServiceMock = new Mock<IEmailService>();
+        _jwtTokenServiceMock = new Mock<IJwtTokenService>();
         _userRepoMock = new Mock<IUserRepository>();
 
         _unitOfWorkMock.Setup(u => u.Users).Returns(_userRepoMock.Object);
@@ -35,11 +37,14 @@ public class AuthServiceTests
         _configurationMock.Setup(c => c["Jwt:Issuer"]).Returns("SkinVision");
         _configurationMock.Setup(c => c["Jwt:Audience"]).Returns("SkinVision");
 
+        _jwtTokenServiceMock.Setup(j => j.GenerateToken(It.IsAny<User>())).Returns("test-token");
+
         _authService = new AuthService(
             _unitOfWorkMock.Object,
             _configurationMock.Object,
             _loggerMock.Object,
-            _emailServiceMock.Object);
+            _emailServiceMock.Object,
+            _jwtTokenServiceMock.Object);
     }
 
     [Fact]
@@ -208,7 +213,9 @@ public class AuthServiceTests
         Assert.NotNull(result);
         Assert.NotNull(result.Token);
         Assert.Equal("doctor@example.com", result.User.Email);
-        _userRepoMock.Verify(r => r.UpdateAsync(user), Times.Once);
+        // AuthService relies on the change tracker (no explicit UpdateAsync call);
+        // persistence is driven by SaveChangesAsync.
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Fact]
@@ -258,7 +265,6 @@ public class AuthServiceTests
 
         // Assert
         Assert.True(result);
-        _userRepoMock.Verify(r => r.UpdateAsync(user), Times.Once);
         _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
@@ -356,7 +362,7 @@ public class AuthServiceTests
         Assert.NotNull(user.PasswordResetToken);
         Assert.NotNull(user.PasswordResetTokenExpires);
         Assert.True(user.PasswordResetTokenExpires > DateTime.UtcNow);
-        _userRepoMock.Verify(r => r.UpdateAsync(user), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
         _emailServiceMock.Verify(
             e => e.SendPasswordResetEmailAsync(
                 "doctor@example.com",
@@ -387,7 +393,7 @@ public class AuthServiceTests
         Assert.Null(result.ErrorMessage);
         Assert.Null(user.PasswordResetToken);
         Assert.Null(user.PasswordResetTokenExpires);
-        _userRepoMock.Verify(r => r.UpdateAsync(user), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Fact]

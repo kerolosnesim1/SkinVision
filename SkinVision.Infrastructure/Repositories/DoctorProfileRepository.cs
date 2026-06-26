@@ -14,6 +14,7 @@ public class DoctorProfileRepository : BaseRepository<DoctorProfile>, IDoctorPro
     public async Task<DoctorProfile?> GetByUserIdAsync(int userId)
     {
         return await _context.DoctorProfiles
+            .AsNoTracking()
             .FirstOrDefaultAsync(dp => dp.DoctorId == userId);
     }
 }

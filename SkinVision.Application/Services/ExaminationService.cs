@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SkinVision.Application.DTOs;
 using SkinVision.Application.Interfaces.Repositories;
 using SkinVision.Application.Interfaces.Services;
@@ -8,10 +9,17 @@ namespace SkinVision.Application.Services;
 public class ExaminationService : IExaminationService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IFileStorageService _fileStorageService;
+    private readonly ILogger<ExaminationService> _logger;
 
-    public ExaminationService(IUnitOfWork unitOfWork)
+    public ExaminationService(
+        IUnitOfWork unitOfWork,
+        IFileStorageService fileStorageService,
+        ILogger<ExaminationService> logger)
     {
         _unitOfWork = unitOfWork;
+        _fileStorageService = fileStorageService;
+        _logger = logger;
     }
 
     public async Task<ExaminationDto?> GetExaminationAsync(int id)
@@ -84,13 +92,57 @@ public class ExaminationService : IExaminationService
 
     public async Task<bool> DeleteExaminationAsync(int doctorId, int id)
     {
-        var examination = await _unitOfWork.Examinations.GetByIdAsync(id);
+        // Load with details so we can clean up the associated physical files
+        // (uploaded images, AI heatmaps, and generated report PDFs) before deletion.
+        var examination = await _unitOfWork.Examinations.GetByIdWithDetailsAsync(id);
         if (examination == null || examination.DoctorId != doctorId)
             return false;
+
+        await CleanupExaminationFilesAsync(examination);
 
         await _unitOfWork.Examinations.DeleteByIdAsync(id);
         await _unitOfWork.SaveChangesAsync();
         return true;
+    }
+
+    /// <summary>
+    /// Deletes the physical files associated with an examination (uploaded images,
+    /// AI prediction heatmaps, and generated report PDFs). Failures are logged but
+    /// do not abort the examination deletion so the database stays consistent.
+    /// </summary>
+    private async Task CleanupExaminationFilesAsync(Examination examination)
+    {
+        foreach (var image in examination.Images ?? Enumerable.Empty<ExaminationImage>())
+        {
+            await TryDeleteFileAsync(image.FilePath, $"image {image.ImageId}");
+
+            if (!string.IsNullOrWhiteSpace(image.AiResult?.HeatmapPath))
+                await TryDeleteFileAsync(image.AiResult.HeatmapPath, $"heatmap for image {image.ImageId}");
+        }
+
+        foreach (var report in examination.Reports ?? Enumerable.Empty<Report>())
+        {
+            if (!string.IsNullOrWhiteSpace(report.ReportPath))
+                await TryDeleteFileAsync(report.ReportPath, $"report {report.ReportId}");
+        }
+    }
+
+    private async Task TryDeleteFileAsync(string filePath, string description)
+    {
+        try
+        {
+            await _fileStorageService.DeleteFileAsync(filePath);
+        }
+        catch (Exception ex)
+        {
+            // File cleanup is best-effort: a missing or locked file must not
+            // prevent the examination record from being deleted.
+            _logger.LogWarning(
+                ex,
+                "Failed to delete physical file for {Description} at {FilePath} during examination deletion",
+                description,
+                filePath);
+        }
     }
 
     public async Task<ExaminationStatsDto> GetStatsAsync(int doctorId)
