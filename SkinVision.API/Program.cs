@@ -8,7 +8,9 @@ using SkinVision.Extensions;
 using SkinVision.Infrastructure.Context;
 using SkinVision.Infrastructure.InfraServices;
 using SkinVision.Infrastructure.Repositories;
+using SkinVision.Infrastructure.RateLimiting;
 using SkinVision.ExceptionHandling;
+using StackExchange.Redis;
 using System.Text;
 using Serilog;
 using Serilog.Events;
@@ -46,6 +48,14 @@ builder.Services.AddControllers();
 // Configure DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Configure Redis 
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis")!;
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    ConnectionMultiplexer.Connect(redisConnectionString));
+
+// Register the Redis-backed rate limiter 
+builder.Services.AddSingleton<IRateLimiter, RedisRateLimiter>();
 
 var googleConfig = builder.Configuration.GetSection("Authentication:Google");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

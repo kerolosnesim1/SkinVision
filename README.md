@@ -190,6 +190,10 @@ The platform uses:
 - lightweight inference execution
 - scalable storage abstractions
 
+## Rate Limiting (Redis)
+
+The AI analysis endpoint (`POST /api/examinations/{id}/images/{imageId}/analyze`) is rate-limited per doctor using a Redis fixed-window counter (`INCR` + `EXPIRE`). This protects the expensive ML inference path from abuse and keeps the service responsive under load. If Redis is unavailable, the limiter **fails open** — requests are allowed and the error is logged, so a Redis outage never blocks doctors.
+
 ---
 
 # Features
@@ -201,6 +205,7 @@ The platform uses:
 - Structured logging with Serilog
 - Repository and service abstraction patterns
 - Async request pipeline
+- Redis-backed rate limiting on the AI analysis endpoint
 
 ## AI
 
@@ -237,6 +242,7 @@ The platform uses:
 | Frontend | Angular 21, TypeScript, Tailwind CSS |
 | ML Service | Python 3.11, FastAPI, PyTorch, XGBoost, scikit-learn |
 | Database | SQL Server |
+| Rate Limiting | Redis, StackExchange.Redis |
 | Authentication | JWT Bearer Tokens, BCrypt, Google OAuth2 |
 | PDF Generation | QuestPDF |
 | Testing | xUnit, Vitest |
@@ -445,6 +451,7 @@ SkinVision/
 - Node.js 20+
 - Python 3.11+
 - SQL Server
+- Redis (for rate limiting)
 
 ---
 
@@ -470,6 +477,30 @@ Swagger available in development at:
 ```text
 /swagger
 ```
+
+---
+
+## Redis (Rate Limiting)
+
+Start a local Redis instance with Docker:
+
+```bash
+docker run -d --name redis -p 6379:6379 redis
+```
+
+Configure the connection and limits in `appsettings.json`:
+
+```json
+"ConnectionStrings": {
+  "Redis": "localhost:6379,abortConnect=false"
+},
+"RateLimit": {
+  "Permit": 4,
+  "WindowHours": 4
+}
+```
+
+> `abortConnect=false` lets the API start even if Redis is not running yet. The rate limiter then fails open until Redis becomes available.
 
 ---
 
@@ -507,6 +538,7 @@ http://localhost:4200
 
 - [ ] Azure Blob Storage integration
 - [ ] Redis caching
+- [x] Redis rate limiting on AI analysis endpoint
 - [ ] Dockerized multi-container deployment
 - [x] AI confidence thresholding & entropy-based uncertainty
 - [x] Metadata-enhanced predictions (age, sex, anatomical site)

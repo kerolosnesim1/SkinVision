@@ -828,7 +828,13 @@ export class NewExaminationComponent {
           this.analyzing = false;
           this.inFlight = false;
 
-          if (error.status === 503) {
+          if (error.status === 429) {
+            const retryAfter = error.headers?.get('Retry-After');
+            const minutes = retryAfter ? Math.ceil(Number(retryAfter) / 60) : null;
+            this.aiError = minutes
+              ? `Analysis limit reached. Please try again in ${minutes} minute${minutes > 1 ? 's' : ''}.`
+              : 'Analysis limit reached. Please try again later.';
+          } else if (error.status === 503) {
             this.aiError = 'AI service is currently unavailable. Please try again later.';
           } else if (error.status === 500) {
             this.aiError = 'AI analysis encountered an internal error. Please try again.';

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkinVision.Application.DTOs;
 using SkinVision.Application.Interfaces.Services;
+using System.Security.Claims;
 
 namespace SkinVision.Controllers;
 
@@ -19,11 +20,19 @@ public class ExaminationsController : BaseApiController
 
     private readonly IExaminationService _examinationService;
     private readonly IImageService _imageService;
+    private readonly IRateLimiter _rateLimiter;
+    private readonly IConfiguration _configuration;
 
-    public ExaminationsController(IExaminationService examinationService,IImageService imageService)
+    public ExaminationsController(
+        IExaminationService examinationService,
+        IImageService imageService,
+        IRateLimiter rateLimiter,
+        IConfiguration configuration)
     {
         _examinationService = examinationService;
         _imageService = imageService;
+        _rateLimiter = rateLimiter;
+        _configuration = configuration;
     }
 
     [HttpGet]
@@ -143,6 +152,22 @@ public class ExaminationsController : BaseApiController
         var doctorId = GetCurrentUserId();
         if (doctorId == null)
             return Unauthorized();
+
+        // Rate limit: max 4 analyses per 4 hours, per doctor.
+        var permit = _configuration.GetValue<int>("RateLimit:Permit", 4);
+        var window = TimeSpan.FromHours(_configuration.GetValue<int>("RateLimit:WindowHours", 4));
+
+        var rateLimit = await _rateLimiter.TryAcquireAsync($"predict:{doctorId}", permit, window);
+
+        if (!rateLimit.Allowed)
+        {
+            Response.Headers["Retry-After"] = rateLimit.RetryAfterSeconds?.ToString();
+            return StatusCode(429, new
+            {
+                error = "Rate limit exceeded. Please try again later.",
+                retryAfterSeconds = rateLimit.RetryAfterSeconds
+            });
+        }
 
         try
         {
